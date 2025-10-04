@@ -28,7 +28,7 @@ app = FastAPI(
     lifespan=lifespan,
     openapi_url="/api/v1/openapi.json",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # --- Middleware ---
@@ -40,6 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Middleware to log incoming requests."""
@@ -47,6 +48,7 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     logger.info(f"Response: {response.status_code}")
     return response
+
 
 # --- Routers ---
 app.include_router(github.router, prefix="/api/v1/github", tags=["GitHub"])
@@ -62,7 +64,7 @@ async def read_root():
         "application": settings.app_name,
         "version": app.version,
         "message": "Welcome to the xSweAgent MCP Server!",
-        "documentation": "/docs"
+        "documentation": "/docs",
     }
 
 
@@ -73,12 +75,14 @@ async def read_health():
     # Basic liveness check. We can expand this to check DB/Redis later.
     return {"status": "ok", "application": settings.app_name}
 
+
 # --- Exception Handler ---
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Handles unexpected errors."""
-    logger.error(f"Unhandled exception for {request.method} {request.url}: {exc}", exc_info=True)
+    logger.error(
+        f"Unhandled exception for {request.method} {request.url}: {exc}", exc_info=True
+    )
     return JSONResponse(
-        status_code=500,
-        content={"detail": "An internal server error occurred."}
+        status_code=500, content={"detail": "An internal server error occurred."}
     )

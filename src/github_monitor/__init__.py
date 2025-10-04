@@ -12,27 +12,22 @@ from .models import (
     Label,
     Milestone,
     Repository,
-    PullRequest
+    PullRequest,
 )
 
 from .repository import (
-    GitHubRepositoryInterface,
     GitHubRepository,
     CachedGitHubRepository,
     SearchCriteria,
-    create_github_repository
+    create_github_repository,
 )
 
-from .service import (
-    GitHubIssuesService,
-    IssueMetrics,
-    ProductivityMetrics
-)
+from .service import GitHubIssuesService, IssueMetrics, ProductivityMetrics
 
 __all__ = [
     # Models
     "Issue",
-    "IssueState", 
+    "IssueState",
     "IssuePriority",
     "IssueType",
     "GitHubUser",
@@ -40,16 +35,13 @@ __all__ = [
     "Milestone",
     "Repository",
     "PullRequest",
-    
     # Repository
-    "GitHubRepositoryInterface",
     "GitHubRepository",
-    "CachedGitHubRepository", 
+    "CachedGitHubRepository",
     "SearchCriteria",
     "create_github_repository",
-    
     # Service
     "GitHubIssuesService",
     "IssueMetrics",
-    "ProductivityMetrics"
+    "ProductivityMetrics",
 ]

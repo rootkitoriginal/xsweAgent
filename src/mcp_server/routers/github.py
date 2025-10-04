@@ -20,9 +20,7 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.get("/issues", response_model=List[Issue])
-async def get_all_issues(
-    service: GitHubIssuesService = Depends(get_github_service)
-):
+async def get_all_issues(service: GitHubIssuesService = Depends(get_github_service)):
     """
     Retrieve all issues from the configured GitHub repository.
     """
@@ -33,12 +31,14 @@ async def get_all_issues(
         return issues
     except Exception as e:
         logger.error(f"Failed to retrieve GitHub issues: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to retrieve issues from GitHub.")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve issues from GitHub."
+        )
 
 
 @router.get("/issues/summary", response_model=dict)
 async def get_issues_summary(
-    service: GitHubIssuesService = Depends(get_github_service)
+    service: GitHubIssuesService = Depends(get_github_service),
 ):
     """
     Get a summary of open and closed issues.

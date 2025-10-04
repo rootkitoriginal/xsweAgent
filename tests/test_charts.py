@@ -23,14 +23,14 @@ def productivity_analysis_result():
         summary="Good productivity.",
         metrics={"open_issues": 10, "closed_issues": 40},
         details={"issues_by_state": {"open": 10, "closed": 40}},
-        context=context
+        context=context,
     )
 
 
 def test_chart_factory_productivity_bar(productivity_analysis_result):
     """Test creating a bar chart from a productivity result."""
     chart_data = ChartFactory.create_chart(productivity_analysis_result, ChartType.BAR)
-    
+
     assert chart_data is not None
     config = chart_data.config
     assert config.chart_type == ChartType.BAR
@@ -42,7 +42,7 @@ def test_chart_factory_productivity_bar(productivity_analysis_result):
 def test_chart_factory_productivity_pie(productivity_analysis_result):
     """Test creating a pie chart from a productivity result."""
     chart_data = ChartFactory.create_chart(productivity_analysis_result, ChartType.PIE)
-    
+
     assert chart_data is not None
     config = chart_data.config
     assert config.chart_type == ChartType.PIE
@@ -51,7 +51,7 @@ def test_chart_factory_productivity_pie(productivity_analysis_result):
     assert config.y_data == [10, 40]
 
 
-@patch('matplotlib.pyplot.show')
+@patch("matplotlib.pyplot.show")
 def test_chart_generator(mock_show):
     """Test the ChartGenerator produces an image."""
     config = ChartConfiguration(
@@ -60,13 +60,13 @@ def test_chart_generator(mock_show):
         y_label="Y",
         chart_type=ChartType.LINE,
         x_data=[1, 2, 3],
-        y_data=[2, 4, 6]
+        y_data=[2, 4, 6],
     )
-    
+
     generator = ChartGenerator(config)
     generated_chart = generator.generate()
-    
+
     assert generated_chart is not None
-    assert generated_chart.format == 'png'
+    assert generated_chart.format == "png"
     assert len(generated_chart.image_data) > 0
     assert generated_chart.filename.startswith("test_chart")

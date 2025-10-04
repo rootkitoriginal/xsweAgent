@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 # It's important to patch settings before importing the app
 from src.config import settings
+
 settings.get_settings.cache_clear()
 settings.SETTINGS_CACHE = None
 
@@ -40,17 +41,23 @@ def test_health_endpoint(client):
 
 def test_get_all_issues_endpoint(client):
     """Test the /github/issues endpoint."""
-    
+
     # Mock the service method
     mock_service_instance = AsyncMock()
     mock_service_instance.get_all_issues.return_value = [
-        Issue(id=1, number=1, title="API Test Issue", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z")
+        Issue(
+            id=1,
+            number=1,
+            title="API Test Issue",
+            state=IssueState.OPEN,
+            created_at="2023-01-01T00:00:00Z",
+        )
     ]
     # Attach the mock service directly to the app state used by the dependency
     app.state.github_service = mock_service_instance
 
     response = client.get("/api/v1/github/issues")
-    
+
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["title"] == "API Test Issue"
@@ -58,10 +65,18 @@ def test_get_all_issues_endpoint(client):
 
 def test_run_analysis_endpoint(client):
     """Test the /analytics/run endpoint."""
-    
+
     # Mock GitHub service
     mock_github_service = AsyncMock()
-    mock_github_service.get_all_issues.return_value = [Issue(id=1, number=1, title="Issue", state=IssueState.OPEN, created_at="2023-01-01")]
+    mock_github_service.get_all_issues.return_value = [
+        Issue(
+            id=1,
+            number=1,
+            title="Issue",
+            state=IssueState.OPEN,
+            created_at="2023-01-01",
+        )
+    ]
     # Attach mocks directly to app state
     app.state.github_service = mock_github_service
     mock_analytics_engine = AsyncMock()
@@ -73,7 +88,7 @@ def test_run_analysis_endpoint(client):
             "data": {"score": 0.9},
             "summary": "Excellent",
             "recommendations": [],
-            "metadata": {}
+            "metadata": {},
         }
     }
     # ensure clear_cache is a normal callable so shutdown won't create coroutine warnings
@@ -81,7 +96,7 @@ def test_run_analysis_endpoint(client):
     app.state.analytics_engine = mock_analytics_engine
 
     response = client.post("/api/v1/analytics/run")
-    
+
     assert response.status_code == 200
     assert "productivity" in response.json()
     assert response.json()["productivity"]["data"]["score"] == 0.9

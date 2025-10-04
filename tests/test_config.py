@@ -6,7 +6,13 @@ import os
 import pytest
 from pydantic import ValidationError
 
-from src.config.settings import AppConfig, GitHubConfig, GeminiConfig, MCPServerConfig, get_settings
+from src.config.settings import (
+    AppConfig,
+    GitHubConfig,
+    GeminiConfig,
+    MCPServerConfig,
+    get_settings,
+)
 
 
 def test_app_config_defaults():
@@ -20,7 +26,7 @@ def test_github_config_env_vars(monkeypatch):
     """Test GitHubConfig loading from environment variables."""
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
     monkeypatch.setenv("GITHUB_REPO", "test/repo")
-    
+
     config = GitHubConfig()
     assert config.github_token == "test_token"
     assert config.github_repo == "test/repo"
@@ -35,7 +41,7 @@ def test_github_config_missing_vars():
 def test_gemini_config_env_vars(monkeypatch):
     """Test GeminiConfig loading from environment variables."""
     monkeypatch.setenv("GEMINI_API_KEY", "test_api_key")
-    
+
     config = GeminiConfig()
     assert config.gemini_api_key == "test_api_key"
     assert config.gemini_model_name == "gemini-1.5-flash"
