@@ -45,7 +45,7 @@ def test_get_all_issues_endpoint(mock_get_service, client):
     # Mock the service method
     mock_service_instance = AsyncMock()
     mock_service_instance.get_all_issues.return_value = [
-        Issue(id=1, title="API Test Issue", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z")
+        Issue(id=1, number=1, title="API Test Issue", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z")
     ]
     mock_get_service.return_value = mock_service_instance
     
@@ -63,7 +63,7 @@ def test_run_analysis_endpoint(mock_get_github, mock_get_analytics, client):
     
     # Mock GitHub service
     mock_github_service = AsyncMock()
-    mock_github_service.get_all_issues.return_value = [Issue(id=1, title="Issue", state=IssueState.OPEN, created_at="2023-01-01")]
+    mock_github_service.get_all_issues.return_value = [Issue(id=1, number=1, title="Issue", state=IssueState.OPEN, created_at="2023-01-01")]
     mock_get_github.return_value = mock_github_service
     
     # Mock Analytics engine
