@@ -65,9 +65,19 @@ def test_run_analysis_endpoint(client):
     # Attach mocks directly to app state
     app.state.github_service = mock_github_service
     mock_analytics_engine = AsyncMock()
+    # Return a result that matches the expected AnalysisResult schema
     mock_analytics_engine.analyze.return_value = {
-        "productivity": {"score": 0.9, "summary": "Excellent"}
+        "productivity": {
+            "analysis_type": "productivity",
+            "timestamp": "2025-10-04T00:00:00Z",
+            "data": {"score": 0.9},
+            "summary": "Excellent",
+            "recommendations": [],
+            "metadata": {}
+        }
     }
+    # ensure clear_cache is a normal callable so shutdown won't create coroutine warnings
+    mock_analytics_engine.clear_cache = lambda: None
     app.state.analytics_engine = mock_analytics_engine
 
     response = client.post("/api/v1/analytics/run")
