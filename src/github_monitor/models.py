@@ -11,6 +11,7 @@ from enum import Enum
 
 class IssueState(str, Enum):
     """GitHub issue state enumeration."""
+
     OPEN = "open"
     CLOSED = "closed"
     ALL = "all"
@@ -18,6 +19,7 @@ class IssueState(str, Enum):
 
 class IssuePriority(str, Enum):
     """Issue priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -27,6 +29,7 @@ class IssuePriority(str, Enum):
 
 class IssueType(str, Enum):
     """Issue type classification."""
+
     BUG = "bug"
     FEATURE = "feature"
     ENHANCEMENT = "enhancement"
@@ -38,6 +41,7 @@ class IssueType(str, Enum):
 @dataclass
 class GitHubUser:
     """GitHub user representation."""
+
     id: int
     login: str
     name: Optional[str] = None
@@ -45,9 +49,9 @@ class GitHubUser:
     avatar_url: Optional[str] = None
     html_url: Optional[str] = None
     type: str = "User"  # User, Bot, Organization
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'GitHubUser':
+    def from_dict(cls, data: Dict[str, Any]) -> "GitHubUser":
         """Create GitHubUser from GitHub API response."""
         return cls(
             id=data.get("id"),
@@ -56,32 +60,34 @@ class GitHubUser:
             email=data.get("email"),
             avatar_url=data.get("avatar_url"),
             html_url=data.get("html_url"),
-            type=data.get("type", "User")
+            type=data.get("type", "User"),
         )
 
 
 @dataclass
 class Label:
     """GitHub label representation."""
+
     id: int
     name: str
     color: str
     description: Optional[str] = None
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Label':
+    def from_dict(cls, data: Dict[str, Any]) -> "Label":
         """Create Label from GitHub API response."""
         return cls(
             id=data.get("id"),
             name=data.get("name"),
             color=data.get("color"),
-            description=data.get("description")
+            description=data.get("description"),
         )
 
 
 @dataclass
 class Milestone:
     """GitHub milestone representation."""
+
     id: int
     number: int
     title: str
@@ -93,9 +99,9 @@ class Milestone:
     closed_at: Optional[datetime] = None
     open_issues: int = 0
     closed_issues: int = 0
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Milestone':
+    def from_dict(cls, data: Dict[str, Any]) -> "Milestone":
         """Create Milestone from GitHub API response."""
         return cls(
             id=data.get("id"),
@@ -108,16 +114,16 @@ class Milestone:
             due_on=cls._parse_datetime(data.get("due_on")),
             closed_at=cls._parse_datetime(data.get("closed_at")),
             open_issues=data.get("open_issues", 0),
-            closed_issues=data.get("closed_issues", 0)
+            closed_issues=data.get("closed_issues", 0),
         )
-    
+
     @staticmethod
     def _parse_datetime(date_str: Optional[str]) -> Optional[datetime]:
         """Parse GitHub datetime string."""
         if not date_str:
             return None
         try:
-            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             return None
 
@@ -125,6 +131,7 @@ class Milestone:
 @dataclass
 class Issue:
     """GitHub issue representation with enhanced analytics fields."""
+
     id: int
     number: int
     title: str
@@ -140,38 +147,38 @@ class Issue:
     milestone: Optional[Milestone] = None
     comments: int = 0
     html_url: Optional[str] = None
-    
+
     # Analytics fields
     priority: IssuePriority = IssuePriority.UNKNOWN
     issue_type: IssueType = IssueType.OTHER
     estimated_hours: Optional[float] = None
     actual_hours: Optional[float] = None
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Issue':
+    def from_dict(cls, data: Dict[str, Any]) -> "Issue":
         """Create Issue from GitHub API response."""
         # Parse user
         user_data = data.get("user")
         user = GitHubUser.from_dict(user_data) if user_data else None
-        
+
         # Parse assignee
         assignee_data = data.get("assignee")
         assignee = GitHubUser.from_dict(assignee_data) if assignee_data else None
-        
+
         # Parse assignees
         assignees = []
         for assignee_data in data.get("assignees", []):
             assignees.append(GitHubUser.from_dict(assignee_data))
-        
+
         # Parse labels
         labels = []
         for label_data in data.get("labels", []):
             labels.append(Label.from_dict(label_data))
-        
+
         # Parse milestone
         milestone_data = data.get("milestone")
         milestone = Milestone.from_dict(milestone_data) if milestone_data else None
-        
+
         issue = cls(
             id=data.get("id"),
             number=data.get("number"),
@@ -187,14 +194,14 @@ class Issue:
             labels=labels,
             milestone=milestone,
             comments=data.get("comments", 0),
-            html_url=data.get("html_url")
+            html_url=data.get("html_url"),
         )
-        
+
         # Analyze issue for priority and type
         issue._analyze_issue()
-        
+
         return issue
-    
+
     def _analyze_issue(self):
         """Analyze issue content to determine priority and type."""
         # Extract priority from labels
@@ -206,15 +213,15 @@ class Issue:
             "priority: critical": IssuePriority.CRITICAL,
             "priority: high": IssuePriority.HIGH,
             "priority: medium": IssuePriority.MEDIUM,
-            "priority: low": IssuePriority.LOW
+            "priority: low": IssuePriority.LOW,
         }
-        
+
         for label in self.labels:
             label_name = label.name.lower()
             if label_name in priority_labels:
                 self.priority = priority_labels[label_name]
                 break
-        
+
         # Extract type from labels
         type_labels = {
             "bug": IssueType.BUG,
@@ -224,64 +231,66 @@ class Issue:
             "question": IssueType.QUESTION,
             "docs": IssueType.DOCUMENTATION,
             "feat": IssueType.FEATURE,
-            "fix": IssueType.BUG
+            "fix": IssueType.BUG,
         }
-        
+
         for label in self.labels:
             label_name = label.name.lower()
             if label_name in type_labels:
                 self.issue_type = type_labels[label_name]
                 break
-    
+
     @staticmethod
     def _parse_datetime(date_str: Optional[str]) -> Optional[datetime]:
         """Parse GitHub datetime string."""
         if not date_str:
             return None
         try:
-            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             return None
-    
+
     @property
     def is_open(self) -> bool:
         """Check if issue is open."""
         return self.state == IssueState.OPEN
-    
+
     @property
     def is_closed(self) -> bool:
         """Check if issue is closed."""
         return self.state == IssueState.CLOSED
-    
+
     @property
     def time_to_close(self) -> Optional[float]:
         """Calculate time to close in hours."""
         if not self.is_closed or not self.created_at or not self.closed_at:
             return None
-        
+
         delta = self.closed_at - self.created_at
         return delta.total_seconds() / 3600
-    
+
     @property
     def age_in_hours(self) -> Optional[float]:
         """Calculate issue age in hours."""
         if not self.created_at:
             return None
-        
-        end_time = self.closed_at if self.is_closed else datetime.now(self.created_at.tzinfo)
+
+        end_time = (
+            self.closed_at if self.is_closed else datetime.now(self.created_at.tzinfo)
+        )
         delta = end_time - self.created_at
         return delta.total_seconds() / 3600
-    
+
     @property
     def has_assignee(self) -> bool:
         """Check if issue has any assignee."""
         return self.assignee is not None or len(self.assignees) > 0
-    
+
     @property
     def label_names(self) -> List[str]:
         """Get list of label names."""
         return [label.name for label in self.labels]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert issue to dictionary for serialization."""
         return {
@@ -305,13 +314,14 @@ class Issue:
             "estimated_hours": self.estimated_hours,
             "actual_hours": self.actual_hours,
             "time_to_close": self.time_to_close,
-            "age_in_hours": self.age_in_hours
+            "age_in_hours": self.age_in_hours,
         }
 
 
 @dataclass
 class PullRequest:
     """GitHub pull request representation."""
+
     id: int
     number: int
     title: str
@@ -327,31 +337,31 @@ class PullRequest:
     labels: List[Label] = field(default_factory=list)
     milestone: Optional[Milestone] = None
     html_url: Optional[str] = None
-    
+
     # PR specific fields
     head_sha: Optional[str] = None
     base_sha: Optional[str] = None
     is_draft: bool = False
     mergeable: Optional[bool] = None
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PullRequest':
+    def from_dict(cls, data: Dict[str, Any]) -> "PullRequest":
         """Create PullRequest from GitHub API response."""
         # Similar parsing logic as Issue
         # Implementation would be similar to Issue.from_dict()
         pass  # Placeholder for now
-    
+
     @property
     def is_merged(self) -> bool:
         """Check if PR is merged."""
         return self.merged_at is not None
-    
+
     @property
     def time_to_merge(self) -> Optional[float]:
         """Calculate time to merge in hours."""
         if not self.is_merged or not self.created_at or not self.merged_at:
             return None
-        
+
         delta = self.merged_at - self.created_at
         return delta.total_seconds() / 3600
 
@@ -359,6 +369,7 @@ class PullRequest:
 @dataclass
 class Repository:
     """GitHub repository representation."""
+
     id: int
     name: str
     full_name: str
@@ -368,15 +379,15 @@ class Repository:
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     pushed_at: Optional[datetime] = None
-    
+
     # Repository stats
     open_issues_count: int = 0
     forks_count: int = 0
     stargazers_count: int = 0
     watchers_count: int = 0
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Repository':
+    def from_dict(cls, data: Dict[str, Any]) -> "Repository":
         """Create Repository from GitHub API response."""
         return cls(
             id=data.get("id"),
@@ -391,15 +402,15 @@ class Repository:
             open_issues_count=data.get("open_issues_count", 0),
             forks_count=data.get("forks_count", 0),
             stargazers_count=data.get("stargazers_count", 0),
-            watchers_count=data.get("watchers_count", 0)
+            watchers_count=data.get("watchers_count", 0),
         )
-    
+
     @staticmethod
     def _parse_datetime(date_str: Optional[str]) -> Optional[datetime]:
         """Parse GitHub datetime string."""
         if not date_str:
             return None
         try:
-            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             return None

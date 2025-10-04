@@ -11,16 +11,16 @@ from .strategies import (
     VelocityAnalysisStrategy,
     BurndownAnalysisStrategy,
     QualityAnalysisStrategy,
-    AnalyticsEngine
+    AnalyticsEngine,
 )
 
 __all__ = [
     "AnalysisStrategy",
-    "AnalysisResult", 
+    "AnalysisResult",
     "AnalysisType",
     "ProductivityAnalysisStrategy",
     "VelocityAnalysisStrategy",
     "BurndownAnalysisStrategy",
     "QualityAnalysisStrategy",
-    "AnalyticsEngine"
+    "AnalyticsEngine",
 ]

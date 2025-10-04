@@ -22,7 +22,7 @@ class GeminiClient:
     def __init__(self, api_key: Optional[str] = None):
         """
         Initializes the Gemini client.
-        
+
         Args:
             api_key: The Google AI API key. If not provided, it's loaded from settings.
         """
@@ -35,7 +35,7 @@ class GeminiClient:
         genai.configure(api_key=self.api_key)
         self._model = None
         self.model_name = settings.gemini_model_name
-        
+
     @property
     def model(self):
         """Lazy-loads the generative model."""
@@ -45,9 +45,7 @@ class GeminiClient:
         return self._model
 
     async def generate_content(
-        self, 
-        prompt: str,
-        generation_config: Optional[Dict[str, Any]] = None
+        self, prompt: str, generation_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Generates content using the configured Gemini model.
@@ -64,9 +62,9 @@ class GeminiClient:
                 "status": AnalysisStatus.FAILED,
                 "error": "Model not initialized.",
                 "text": None,
-                "usage_metadata": None
+                "usage_metadata": None,
             }
-            
+
         config = generation_config or {
             "temperature": 0.2,
             "top_p": 0.9,
@@ -77,12 +75,11 @@ class GeminiClient:
         try:
             logger.debug(f"Sending prompt to Gemini: {prompt[:200]}...")
             response = await self.model.generate_content_async(
-                prompt,
-                generation_config=genai.types.GenerationConfig(**config)
+                prompt, generation_config=genai.types.GenerationConfig(**config)
             )
-            
+
             logger.debug("Received response from Gemini.")
-            
+
             # Extract usage metadata if available
             usage_metadata = {}
             if response.usage_metadata:
@@ -95,7 +92,7 @@ class GeminiClient:
             return {
                 "status": AnalysisStatus.COMPLETED,
                 "text": response.text,
-                "usage_metadata": usage_metadata
+                "usage_metadata": usage_metadata,
             }
 
         except Exception as e:
@@ -104,5 +101,5 @@ class GeminiClient:
                 "status": AnalysisStatus.FAILED,
                 "error": str(e),
                 "text": None,
-                "usage_metadata": None
+                "usage_metadata": None,
             }

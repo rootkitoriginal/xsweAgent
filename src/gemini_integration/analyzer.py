@@ -23,7 +23,7 @@ class CodeAnalyzer:
     def __init__(self, client: Optional[GeminiClient] = None):
         """
         Initializes the CodeAnalyzer.
-        
+
         Args:
             client: An instance of GeminiClient. If not provided, a new one is created.
         """
@@ -40,18 +40,18 @@ class CodeAnalyzer:
             An AnalysisResult object with the detailed report.
         """
         request_id = str(uuid.uuid4())
-        
+
         prompt = self._build_analysis_prompt(snippet)
-        
+
         result = AnalysisResult(
             request_id=request_id,
             status=AnalysisStatus.RUNNING,
-            model_used=self.client.model_name
+            model_used=self.client.model_name,
         )
 
         try:
             api_response = await self.client.generate_content(prompt)
-            
+
             result.usage_metadata = api_response.get("usage_metadata")
 
             if api_response["status"] == AnalysisStatus.FAILED:
@@ -60,7 +60,7 @@ class CodeAnalyzer:
                 return result
 
             report = self._parse_response(api_response["text"])
-            
+
             if report:
                 result.status = AnalysisStatus.COMPLETED
                 result.report = report
@@ -69,7 +69,9 @@ class CodeAnalyzer:
                 result.error_message = "Failed to parse model response."
 
         except Exception as e:
-            logger.error(f"Code analysis failed for request {request_id}: {e}", exc_info=True)
+            logger.error(
+                f"Code analysis failed for request {request_id}: {e}", exc_info=True
+            )
             result.status = AnalysisStatus.FAILED
             result.error_message = str(e)
 
@@ -77,7 +79,7 @@ class CodeAnalyzer:
 
     def _build_analysis_prompt(self, snippet: CodeSnippet) -> str:
         """Constructs the detailed prompt for the Gemini model."""
-        
+
         prompt = f"""
         Analyze the following {snippet.language} code snippet.
         Filename: {snippet.filename or 'N/A'}
@@ -121,7 +123,7 @@ class CodeAnalyzer:
                 json_str = json_str[7:]
             if json_str.endswith("```"):
                 json_str = json_str[:-3]
-            
+
             data = json.loads(json_str)
 
             suggestions = [
@@ -131,8 +133,9 @@ class CodeAnalyzer:
                     description=s.get("description"),
                     category=s.get("category"),
                     severity=s.get("severity"),
-                    suggested_change=s.get("suggested_change")
-                ) for s in data.get("suggestions", [])
+                    suggested_change=s.get("suggested_change"),
+                )
+                for s in data.get("suggestions", [])
             ]
 
             return CodeReport(
@@ -140,9 +143,11 @@ class CodeAnalyzer:
                 complexity_score=float(data.get("complexity_score", 0.0)),
                 maintainability_index=float(data.get("maintainability_index", 0.0)),
                 suggestions=suggestions,
-                tags=data.get("tags", [])
+                tags=data.get("tags", []),
             )
 
         except (json.JSONDecodeError, TypeError, KeyError) as e:
-            logger.error(f"Failed to parse Gemini response: {e}\nResponse text: {response_text[:500]}...")
+            logger.error(
+                f"Failed to parse Gemini response: {e}\nResponse text: {response_text[:500]}..."
+            )
             return None

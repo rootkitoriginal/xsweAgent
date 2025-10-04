@@ -20,12 +20,12 @@ from . import get_config
 
 class LoggerSetup:
     """Centralized logging setup and configuration."""
-    
+
     def __init__(self):
         self.config = get_config()
         self._setup_structlog()
         self._setup_loguru()
-        
+
     def _setup_structlog(self):
         """Configure structlog for structured logging."""
         structlog.configure(
@@ -33,7 +33,11 @@ class LoggerSetup:
                 structlog.contextvars.merge_contextvars,
                 structlog.processors.add_log_level,
                 structlog.processors.TimeStamper(fmt="iso"),
-                structlog.dev.ConsoleRenderer() if self.config.debug else structlog.processors.JSONRenderer()
+                (
+                    structlog.dev.ConsoleRenderer()
+                    if self.config.debug
+                    else structlog.processors.JSONRenderer()
+                ),
             ],
             wrapper_class=structlog.make_filtering_bound_logger(
                 getattr(logging, self.config.logging.level)
@@ -41,12 +45,12 @@ class LoggerSetup:
             logger_factory=structlog.PrintLoggerFactory(),
             cache_logger_on_first_use=True,
         )
-        
+
     def _setup_loguru(self):
         """Configure loguru for enhanced logging features."""
         # Remove default logger
         logger.remove()
-        
+
         # Console logger
         logger.add(
             sys.stderr,
@@ -54,9 +58,9 @@ class LoggerSetup:
             level=self.config.logging.level,
             colorize=True,
             backtrace=True,
-            diagnose=self.config.debug
+            diagnose=self.config.debug,
         )
-        
+
         # File logger (if configured)
         if self.config.logging.file:
             log_path = Path(self.config.logging.file)
@@ -70,16 +74,20 @@ class LoggerSetup:
                     retention="30 days",
                     compression="gz",
                     backtrace=True,
-                    diagnose=self.config.debug
+                    diagnose=self.config.debug,
                 )
             except PermissionError:
                 # If we cannot write to the file (readonly FS, permissions),
                 # continue with console-only logging to avoid crashing the app.
-                logger.warning(f"Cannot write log file {log_path}; continuing with console logging only.")
+                logger.warning(
+                    f"Cannot write log file {log_path}; continuing with console logging only."
+                )
             except Exception:
                 # Generic fallback: don't let logging setup crash the application.
-                logger.warning(f"Failed to initialize file logger for {log_path}; continuing with console logging.")
-            
+                logger.warning(
+                    f"Failed to initialize file logger for {log_path}; continuing with console logging."
+                )
+
     def _get_log_format(self, for_file: bool = False) -> str:
         """Get appropriate log format based on configuration."""
         if self.config.logging.format == "json":
@@ -95,60 +103,62 @@ class LoggerSetup:
 
 class XSWELogger:
     """Enhanced logger with context management for xSwE Agent."""
-    
+
     def __init__(self, name: str):
         self.name = name
         self.logger = logger.bind(component=name)
         self.struct_logger = structlog.get_logger(name)
-        
+
     def debug(self, message: str, **kwargs):
         """Log debug message with context."""
         self.logger.debug(message, **kwargs)
-        
+
     def info(self, message: str, **kwargs):
         """Log info message with context."""
         self.logger.info(message, **kwargs)
-        
+
     def warning(self, message: str, **kwargs):
         """Log warning message with context."""
         self.logger.warning(message, **kwargs)
-        
+
     def error(self, message: str, **kwargs):
         """Log error message with context."""
         self.logger.error(message, **kwargs)
-        
+
     def critical(self, message: str, **kwargs):
         """Log critical message with context."""
         self.logger.critical(message, **kwargs)
-        
+
     def exception(self, message: str, **kwargs):
         """Log exception with traceback."""
         self.logger.exception(message, **kwargs)
-        
-    def bind(self, **kwargs) -> 'XSWELogger':
+
+    def bind(self, **kwargs) -> "XSWELogger":
         """Create new logger with bound context."""
         new_logger = XSWELogger(self.name)
         new_logger.logger = self.logger.bind(**kwargs)
         new_logger.struct_logger = self.struct_logger.bind(**kwargs)
         return new_logger
-        
-    def with_context(self, **kwargs) -> 'XSWELogger':
+
+    def with_context(self, **kwargs) -> "XSWELogger":
         """Add context to logger (alias for bind)."""
         return self.bind(**kwargs)
 
 
 class PerformanceLogger:
     """Logger for performance monitoring and metrics."""
-    
+
     def __init__(self):
         self.logger = XSWELogger("performance")
-        
-    def log_api_call(self, 
-                     api_name: str, 
-                     endpoint: str, 
-                     duration_ms: float, 
-                     status_code: Optional[int] = None,
-                     **kwargs):
+
+    def log_api_call(
+        self,
+        api_name: str,
+        endpoint: str,
+        duration_ms: float,
+        status_code: Optional[int] = None,
+        **kwargs,
+    ):
         """Log API call performance metrics."""
         self.logger.info(
             "API call completed",
@@ -156,62 +166,61 @@ class PerformanceLogger:
             endpoint=endpoint,
             duration_ms=duration_ms,
             status_code=status_code,
-            **kwargs
+            **kwargs,
         )
-        
-    def log_function_timing(self, 
-                          function_name: str, 
-                          duration_ms: float, 
-                          **kwargs):
+
+    def log_function_timing(self, function_name: str, duration_ms: float, **kwargs):
         """Log function execution timing."""
         self.logger.info(
             "Function execution completed",
             function=function_name,
             duration_ms=duration_ms,
-            **kwargs
+            **kwargs,
         )
-        
-    def log_chart_generation(self, 
-                           chart_type: str, 
-                           data_points: int, 
-                           duration_ms: float,
-                           **kwargs):
+
+    def log_chart_generation(
+        self, chart_type: str, data_points: int, duration_ms: float, **kwargs
+    ):
         """Log chart generation performance."""
         self.logger.info(
             "Chart generation completed",
             chart_type=chart_type,
             data_points=data_points,
             duration_ms=duration_ms,
-            **kwargs
+            **kwargs,
         )
 
 
 class SecurityLogger:
     """Logger for security-related events."""
-    
+
     def __init__(self):
         self.logger = XSWELogger("security")
-        
-    def log_authentication_attempt(self, 
-                                 user_id: Optional[str] = None, 
-                                 success: bool = True,
-                                 ip_address: Optional[str] = None,
-                                 **kwargs):
+
+    def log_authentication_attempt(
+        self,
+        user_id: Optional[str] = None,
+        success: bool = True,
+        ip_address: Optional[str] = None,
+        **kwargs,
+    ):
         """Log authentication attempts."""
         self.logger.info(
             "Authentication attempt",
             user_id=user_id,
             success=success,
             ip_address=ip_address,
-            **kwargs
+            **kwargs,
         )
-        
-    def log_api_access(self, 
-                      endpoint: str, 
-                      method: str,
-                      user_id: Optional[str] = None,
-                      ip_address: Optional[str] = None,
-                      **kwargs):
+
+    def log_api_access(
+        self,
+        endpoint: str,
+        method: str,
+        user_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        **kwargs,
+    ):
         """Log API access events."""
         self.logger.info(
             "API access",
@@ -219,19 +228,15 @@ class SecurityLogger:
             method=method,
             user_id=user_id,
             ip_address=ip_address,
-            **kwargs
+            **kwargs,
         )
-        
-    def log_rate_limit_exceeded(self, 
-                              api_name: str,
-                              user_id: Optional[str] = None,
-                              **kwargs):
+
+    def log_rate_limit_exceeded(
+        self, api_name: str, user_id: Optional[str] = None, **kwargs
+    ):
         """Log rate limiting events."""
         self.logger.warning(
-            "Rate limit exceeded",
-            api_name=api_name,
-            user_id=user_id,
-            **kwargs
+            "Rate limit exceeded", api_name=api_name, user_id=user_id, **kwargs
         )
 
 

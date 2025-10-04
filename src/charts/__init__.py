@@ -12,5 +12,5 @@ __all__ = [
     "ChartType",
     "ChartGenerator",
     "ChartData",
-    "ChartConfiguration"
+    "ChartConfiguration",
 ]

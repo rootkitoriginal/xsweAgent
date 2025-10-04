@@ -10,7 +10,7 @@ from enum import Enum
 
 class ChartType(Enum):
     """Enum for different types of charts."""
-    
+
     BAR = "bar"
     LINE = "line"
     PIE = "pie"
@@ -24,7 +24,7 @@ class ChartType(Enum):
 @dataclass
 class ChartStyling:
     """Configuration for chart styling and appearance."""
-    
+
     palette: str = "viridis"
     grid: bool = True
     show_legend: bool = True
@@ -42,21 +42,21 @@ class ChartConfiguration:
     """
     Configuration for a single chart, including data, type, and styling.
     """
-    
+
     title: str
     x_label: str
     y_label: str
     chart_type: ChartType
-    
+
     # Data fields
     x_data: List[Any]
     y_data: Union[List[Any], Dict[str, List[Any]]]
-    
+
     # Optional configuration
     sub_title: Optional[str] = None
     styling: ChartStyling = field(default_factory=ChartStyling)
     annotations: Optional[Dict[str, Any]] = None
-    
+
     # For specialized charts
     ideal_line: Optional[List[float]] = None  # For burndown charts
     average_line: Optional[float] = None  # For velocity charts
@@ -68,16 +68,16 @@ class ChartData:
     Represents the data and configuration needed to generate a chart.
     This model is passed to the chart generator.
     """
-    
+
     config: ChartConfiguration
-    
+
     # Raw data for reference
     raw_data: Optional[List[Dict[str, Any]]] = None
-    
+
     # Metadata
     generated_at: Optional[str] = None
     source_repository: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert chart data to a dictionary for serialization."""
         return {
@@ -86,7 +86,7 @@ class ChartData:
             "x_label": self.config.x_label,
             "y_label": self.config.y_label,
             "data_points": len(self.config.x_data),
-            "source": self.source_repository
+            "source": self.source_repository,
         }
 
 
@@ -95,13 +95,13 @@ class GeneratedChart:
     """
     Represents a generated chart, including the image data and metadata.
     """
-    
+
     filename: str
     image_data: bytes
     format: str  # e.g., "png", "svg"
     chart_type: ChartType
     metadata: Dict[str, Any]
-    
+
     def save(self, path: str) -> None:
         """Save the chart image to a file."""
         with open(path, "wb") as f:
