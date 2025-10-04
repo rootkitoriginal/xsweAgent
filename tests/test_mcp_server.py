@@ -29,6 +29,15 @@ def test_read_root(client):
     assert response.json()["application"] == "xSweAgent"
 
 
+def test_health_endpoint(client):
+    """Test the /health endpoint returns OK."""
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("status") == "ok"
+    assert data.get("application") == "xSweAgent"
+
+
 @patch('..src.mcp_server.routers.github.get_github_service')
 def test_get_all_issues_endpoint(mock_get_service, client):
     """Test the /github/issues endpoint."""

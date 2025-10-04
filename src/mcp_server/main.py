@@ -65,6 +65,14 @@ async def read_root():
         "documentation": "/docs"
     }
 
+
+# --- Health Endpoint ---
+@app.get("/health", tags=["Health"])
+async def read_health():
+    """Simple health check endpoint used by monitoring/probes."""
+    # Basic liveness check. We can expand this to check DB/Redis later.
+    return {"status": "ok", "application": settings.app_name}
+
 # --- Exception Handler ---
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
