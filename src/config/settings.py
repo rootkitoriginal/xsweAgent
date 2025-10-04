@@ -5,7 +5,7 @@ Handles application settings, environment variables, and configuration managemen
 
 from functools import lru_cache
 from typing import Optional, List
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 import os
 from pathlib import Path
@@ -49,11 +49,12 @@ class GitHubConfig(PydanticBaseSettings):
             return self.repo
         return f"{self.repo_owner}/{self.repo_name}"
 
-    @validator("token", pre=True, always=True)
-    def ensure_token(cls, v):
+    @field_validator("token", mode="before")
+    @classmethod
+    def ensure_token(cls, value):
         # If a token was provided via constructor or env var, accept it.
-        if v:
-            return v
+        if value:
+            return value
         env = os.getenv("GITHUB_TOKEN")
         if env:
             return env
@@ -83,15 +84,16 @@ class GeminiConfig(PydanticBaseSettings):
     def gemini_model_name(self) -> str:
         return self.model
 
-    @validator("api_key")
-    def validate_api_key(cls, v):
-        if not v:
-            return v
-        if v == "your_google_gemini_api_key_here":
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key(cls, value):
+        if not value:
+            return value
+        if value == "your_google_gemini_api_key_here":
             raise ValueError(
                 "Please replace the placeholder Gemini API key in your environment."
             )
-        return v
+        return value
 
 
 class MCPServerConfig(PydanticBaseSettings):
@@ -114,11 +116,12 @@ class CacheConfig(PydanticBaseSettings):
     ttl: int = Field(3600, env="CACHE_TTL")  # seconds
     redis_url: str = Field("redis://localhost:6379/0", env="REDIS_URL")
 
-    @validator("type")
-    def validate_cache_type(cls, v):
-        if v not in ["memory", "redis", "file"]:
+    @field_validator("type")
+    @classmethod
+    def validate_cache_type(cls, value):
+        if value not in ["memory", "redis", "file"]:
             raise ValueError("Cache type must be: memory, redis, or file")
-        return v
+        return value
 
 
 class AnalyticsConfig(PydanticBaseSettings):
@@ -138,12 +141,13 @@ class LoggingConfig(PydanticBaseSettings):
     format: str = Field("structured", env="LOG_FORMAT")  # structured, json, simple
     file: Optional[str] = Field("logs/xswe_agent.log", env="LOG_FILE")
 
-    @validator("level")
-    def validate_log_level(cls, v):
+    @field_validator("level")
+    @classmethod
+    def validate_log_level(cls, value):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if v.upper() not in valid_levels:
+        if value.upper() not in valid_levels:
             raise ValueError(f"Log level must be one of: {valid_levels}")
-        return v.upper()
+        return value.upper()
 
 
 class SecurityConfig(PydanticBaseSettings):
@@ -154,13 +158,14 @@ class SecurityConfig(PydanticBaseSettings):
     secret_key: str = Field("dev-change-me-please-0000000000000000", env="SECRET_KEY")
     api_key_expiration_hours: int = Field(24, env="API_KEY_EXPIRATION_HOURS")
 
-    @validator("secret_key")
-    def validate_secret_key(cls, v):
-        if not v or v == "your-super-secret-key-change-this-in-production":
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, value):
+        if not value or value == "your-super-secret-key-change-this-in-production":
             raise ValueError("Valid secret key is required")
-        if len(v) < 32:
+        if len(value) < 32:
             raise ValueError("Secret key must be at least 32 characters long")
-        return v
+        return value
 
 
 class AppConfig(PydanticBaseSettings):
