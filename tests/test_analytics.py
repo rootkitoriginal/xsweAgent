@@ -15,11 +15,11 @@ def sample_issues():
     """Fixture for a list of sample issues."""
     now = datetime.now()
     return [
-        Issue(id=1, title="Open Issue 1", state=IssueState.OPEN, created_at=now - timedelta(days=10)),
-        Issue(id=2, title="Closed Issue 1", state=IssueState.CLOSED, created_at=now - timedelta(days=20), closed_at=now - timedelta(days=5)),
-        Issue(id=3, title="Open Issue 2", state=IssueState.OPEN, created_at=now - timedelta(days=30)),
-        Issue(id=4, title="Closed Issue 2", state=IssueState.CLOSED, created_at=now - timedelta(days=40), closed_at=now - timedelta(days=15)),
-        Issue(id=5, title="Very old closed", state=IssueState.CLOSED, created_at=now - timedelta(days=100), closed_at=now - timedelta(days=95)),
+        Issue(id=1, number=1, title="Open Issue 1", state=IssueState.OPEN, created_at=now - timedelta(days=10)),
+        Issue(id=2, number=2, title="Closed Issue 1", state=IssueState.CLOSED, created_at=now - timedelta(days=20), closed_at=now - timedelta(days=5)),
+        Issue(id=3, number=3, title="Open Issue 2", state=IssueState.OPEN, created_at=now - timedelta(days=30)),
+        Issue(id=4, number=4, title="Closed Issue 2", state=IssueState.CLOSED, created_at=now - timedelta(days=40), closed_at=now - timedelta(days=15)),
+        Issue(id=5, number=5, title="Very old closed", state=IssueState.CLOSED, created_at=now - timedelta(days=100), closed_at=now - timedelta(days=95)),
     ]
 
 

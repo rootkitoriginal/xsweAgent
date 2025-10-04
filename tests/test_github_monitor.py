@@ -65,8 +65,8 @@ async def test_github_issues_service_get_all_issues():
     with patch('..src.github_monitor.repository.GitHubRepository.get_issues') as mock_get_issues:
         # Mock the repository's get_issues to return a list of Issue models
         mock_get_issues.return_value = [
-            Issue(id=1, title="Issue 1", state=IssueState.OPEN, author="user1", created_at="2023-01-01T00:00:00Z"),
-            Issue(id=2, title="Issue 2", state=IssueState.CLOSED, author="user2", created_at="2023-01-02T00:00:00Z")
+            Issue(id=1, number=1, title="Issue 1", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z"),
+            Issue(id=2, number=2, title="Issue 2", state=IssueState.CLOSED, created_at="2023-01-02T00:00:00Z")
         ]
         
         service = GitHubIssuesService(repo_name="test/repo", api_token="fake_token")
@@ -85,9 +85,9 @@ async def test_github_issues_service_get_summary():
     """Test the service layer for getting an issue summary."""
     with patch('..src.github_monitor.repository.GitHubRepository.get_issues') as mock_get_issues:
         mock_get_issues.return_value = [
-            Issue(id=1, title="Issue 1", state=IssueState.OPEN, author="user1", created_at="2023-01-01T00:00:00Z"),
-            Issue(id=2, title="Issue 2", state=IssueState.CLOSED, author="user2", created_at="2023-01-02T00:00:00Z"),
-            Issue(id=3, title="Issue 3", state=IssueState.OPEN, author="user1", created_at="2023-01-03T00:00:00Z")
+            Issue(id=1, number=1, title="Issue 1", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z"),
+            Issue(id=2, number=2, title="Issue 2", state=IssueState.CLOSED, created_at="2023-01-02T00:00:00Z"),
+            Issue(id=3, number=3, title="Issue 3", state=IssueState.OPEN, created_at="2023-01-03T00:00:00Z")
         ]
         
         service = GitHubIssuesService(repo_name="test/repo", api_token="fake_token")
