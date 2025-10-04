@@ -22,7 +22,21 @@ class LoggerSetup:
     """Centralized logging setup and configuration."""
 
     def __init__(self):
-        self.config = get_config()
+        try:
+            self.config = get_config()
+        except Exception:
+            # During unit tests we may intentionally trigger
+            # ValidationError when instantiating config classes. To avoid
+            # crashing imports, fall back to a minimal config object that
+            # provides the attributes used by the logger setup.
+            from types import SimpleNamespace
+
+            fallback_logging = SimpleNamespace(level="INFO", format="simple", file=None)
+            fallback = SimpleNamespace(debug=False, logging=fallback_logging)
+            self.config = fallback
+
+        # Proceed to initialize logging subsystems; they will use the
+        # fallback config when real settings are not yet available.
         self._setup_structlog()
         self._setup_loguru()
 

@@ -16,7 +16,6 @@ from .models import (
 )
 
 from .repository import (
-    GitHubRepositoryInterface,
     GitHubRepository,
     CachedGitHubRepository,
     SearchCriteria,
@@ -37,7 +36,6 @@ __all__ = [
     "Repository",
     "PullRequest",
     # Repository
-    "GitHubRepositoryInterface",
     "GitHubRepository",
     "CachedGitHubRepository",
     "SearchCriteria",

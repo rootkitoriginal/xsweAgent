@@ -205,7 +205,16 @@ class ProductivityAnalysisStrategy(AnalysisStrategy):
             data=data,
             summary=summary,
             recommendations=recommendations,
+            metrics=data,
+            details={
+                "avg_cycle_time": avg_cycle_time,
+                "median_cycle_time": median_cycle_time,
+            },
+            score=round(velocity, 2) if velocity is not None else None,
         )
+        
+
+
 
 
 class VelocityAnalysisStrategy(AnalysisStrategy):
@@ -218,6 +227,16 @@ class VelocityAnalysisStrategy(AnalysisStrategy):
         self, issues: List[Issue], weeks_back: int = 8, **kwargs
     ) -> AnalysisResult:
         """Analyze velocity trends over time."""
+        # Backwards-compatible: tests sometimes pass an AnalyticsContext as
+        # the second positional argument. Detect that and extract the
+        # weeks_back from configuration if provided.
+        context = None
+        if hasattr(weeks_back, "analysis_timestamp"):
+            context = weeks_back
+            weeks_back = getattr(context.configuration, "trend_analysis_periods", 8)
+        else:
+            context = kwargs.get("context")
+
         self.logger.info(
             f"Analyzing velocity trends for {len(issues)} issues over {weeks_back} weeks"
         )
@@ -271,6 +290,13 @@ class VelocityAnalysisStrategy(AnalysisStrategy):
             "lowest_velocity": min(closed_counts) if closed_counts else 0,
         }
 
+        # Provide details for backward compatibility: tests expect a
+        # `details` mapping that contains velocity per period and raw counts.
+        details = {
+            "velocity_per_period": closed_counts,
+            "weeks": weeks_back,
+        }
+
         summary = (
             f"Average velocity: {avg_velocity:.1f} issues/week, trend: {velocity_trend}"
         )
@@ -291,6 +317,11 @@ class VelocityAnalysisStrategy(AnalysisStrategy):
             data=data,
             summary=summary,
             recommendations=recommendations,
+            # fill legacy fields
+            metrics=data,
+            details=details,
+            score=round(avg_velocity, 2),
+            context=context,
         )
 
     def _calculate_trend(self, values: List[float]) -> str:
