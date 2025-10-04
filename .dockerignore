@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# VSCode
+.vscode/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / Editor specific
+.idea/
+*.swp
+*.swo
+
+# Local settings
+.env

@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  xswe-agent:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: xswe-agent
+    ports:
+      - "8000:8000"
+      - "9090:9090"  # Prometheus metrics
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GITHUB_REPO_OWNER=xLabInternet
+      - GITHUB_REPO_NAME=xRatEcosystem
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=8000
+      - CACHE_TYPE=redis
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://xswe:xswepass@postgres:5432/xswedb
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./cache:/app/cache
+      - ./exports:/app/exports
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: xswe-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: xswe-postgres
+    environment:
+      - POSTGRES_DB=xswedb
+      - POSTGRES_USER=xswe
+      - POSTGRES_PASSWORD=xswepass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: xswe-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx_custom.conf:/tmp/nginx.conf:ro
+      - ./nginx_entrypoint.sh:/nginx_entrypoint.sh
+      - ./ssl:/etc/nginx/ssl:ro
+    entrypoint: /nginx_entrypoint.sh
+    depends_on:
+      - xswe-agent
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: xswe-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/tmp/prometheus.yml:ro
+      - ./prometheus_entrypoint.sh:/prometheus_entrypoint.sh
+      - prometheus_data:/prometheus
+    entrypoint: /prometheus_entrypoint.sh
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: xswe-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - xswe-network
+
+volumes:
+  redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  xswe-network:
+    driver: bridge
