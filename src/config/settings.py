@@ -14,6 +14,9 @@ from pathlib import Path
 class GitHubConfig(PydanticBaseSettings):
     """GitHub API configuration."""
 
+    # Ensure environment variables are read directly during tests
+    model_config = {"env_file": None, "case_sensitive": False}
+
     # Token made optional to allow the service to start in development
     # without immediate API credentials. Callers should validate presence
     # where external calls are made.
@@ -28,10 +31,15 @@ class GitHubConfig(PydanticBaseSettings):
 
     @property
     def github_token(self) -> str:
-        return self.token
+        # allow direct env overrides for tests
+        return self.token or os.getenv("GITHUB_TOKEN")
 
     @property
     def github_repo(self) -> str:
+        # Prefer explicit GITHUB_REPO env var when present (owner/name)
+        env_repo = os.getenv("GITHUB_REPO")
+        if env_repo:
+            return env_repo
         if self.repo:
             return self.repo
         return f"{self.repo_owner}/{self.repo_name}"
@@ -39,6 +47,9 @@ class GitHubConfig(PydanticBaseSettings):
 
 class GeminiConfig(PydanticBaseSettings):
     """Google Gemini AI configuration."""
+
+    # Ensure environment variables are read directly during tests
+    model_config = {"env_file": None, "case_sensitive": False}
 
     # API key optional to allow local development without immediate access
     api_key: Optional[str] = Field(
@@ -49,7 +60,7 @@ class GeminiConfig(PydanticBaseSettings):
 
     @property
     def gemini_api_key(self) -> Optional[str]:
-        return self.api_key
+        return self.api_key or os.getenv("GEMINI_API_KEY")
 
     @property
     def gemini_model_name(self) -> str:
@@ -103,6 +114,8 @@ class AnalyticsConfig(PydanticBaseSettings):
 
 class LoggingConfig(PydanticBaseSettings):
     """Logging configuration."""
+
+    model_config = {"env_file": None, "case_sensitive": False}
 
     level: str = Field("INFO", env="LOG_LEVEL")
     format: str = Field("structured", env="LOG_FORMAT")  # structured, json, simple
@@ -179,7 +192,7 @@ class AppConfig(PydanticBaseSettings):
 
     @property
     def log_level(self) -> str:
-        return self.logging.level
+        return os.getenv("LOG_LEVEL") or self.logging.level
 
     @property
     def github_token(self) -> Optional[str]:

@@ -183,7 +183,8 @@ class AnalyticsEngine:
     ) -> AnalysisResult:
         """Run a single strategy analysis with error handling."""
         try:
-            return await strategy.analyze(issues, context)
+            # pass context as keyword to match strategy signatures that expect days_back or context
+            return await strategy.analyze(issues, context=context)
         except Exception as e:
             self._logger.error(f"Strategy {strategy.analysis_type.value} failed: {e}")
             raise
@@ -194,14 +195,17 @@ class AnalyticsEngine:
         """Create analysis context from current state."""
         now = datetime.now()
 
-        # Calculate data freshness (most recent issue update)
+        # Calculate data freshness (most recent issue update). Use a safe
+        # approach that falls back to created_at or now when updated_at is
+        # missing to avoid ValueError from max() on an empty sequence.
         data_freshness = now
         if issues:
-            latest_update = max(
-                issue.updated_at for issue in issues if issue.updated_at
-            )
-            if latest_update:
-                data_freshness = latest_update
+            updated_times = [issue.updated_at for issue in issues if issue.updated_at]
+            if updated_times:
+                data_freshness = max(updated_times)
+            else:
+                created_times = [issue.created_at for issue in issues if issue.created_at]
+                data_freshness = max(created_times) if created_times else now
 
         # Filter issues for time window calculation
         window_start = now - timedelta(days=config.time_window_days)

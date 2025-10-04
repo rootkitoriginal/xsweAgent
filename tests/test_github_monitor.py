@@ -63,7 +63,7 @@ def test_github_repository_get_issues(MockGithub, mock_github_repo):
 async def test_github_issues_service_get_all_issues():
     """Test the service layer for getting all issues."""
     with patch(
-        "..src.github_monitor.repository.GitHubRepository.get_issues"
+        "src.github_monitor.repository.GitHubRepository.get_issues"
     ) as mock_get_issues:
         # Mock the repository's get_issues to return a list of Issue models
         mock_get_issues.return_value = [
@@ -83,7 +83,8 @@ async def test_github_issues_service_get_all_issues():
             ),
         ]
 
-        service = GitHubIssuesService(repo_name="test/repo", api_token="fake_token")
+        # GitHubIssuesService expects an optional repository parameter; instantiate without repo_name/api_token
+        service = GitHubIssuesService()
 
         # We need to mock the async call if the service method is async
         service.get_all_issues = AsyncMock(return_value=mock_get_issues.return_value)
@@ -98,7 +99,7 @@ async def test_github_issues_service_get_all_issues():
 async def test_github_issues_service_get_summary():
     """Test the service layer for getting an issue summary."""
     with patch(
-        "..src.github_monitor.repository.GitHubRepository.get_issues"
+        "src.github_monitor.repository.GitHubRepository.get_issues"
     ) as mock_get_issues:
         mock_get_issues.return_value = [
             Issue(
@@ -124,7 +125,8 @@ async def test_github_issues_service_get_summary():
             ),
         ]
 
-        service = GitHubIssuesService(repo_name="test/repo", api_token="fake_token")
+        # GitHubIssuesService expects an optional repository parameter; instantiate without repo_name/api_token
+        service = GitHubIssuesService()
 
         # Mock the async call
         async def summary_side_effect():

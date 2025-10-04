@@ -19,6 +19,9 @@ class GeminiClient:
     Handles API key configuration and request execution.
     """
 
+    # default model name exposed as attribute for mocks and compatibility
+    model_name: str = "gemini-1.5-flash"
+
     def __init__(self, api_key: Optional[str] = None):
         """
         Initializes the Gemini client.
@@ -26,15 +29,26 @@ class GeminiClient:
         Args:
             api_key: The Google AI API key. If not provided, it's loaded from settings.
         """
+        # Prefer explicit argument, then environment variable (helps tests with monkeypatch),
+        # then the cached settings object.
         settings = get_settings()
-        self.api_key = api_key or settings.gemini_api_key
+        env_api_key = None
+        try:
+            import os
+
+            env_api_key = os.getenv("GEMINI_API_KEY")
+        except Exception:
+            env_api_key = None
+
+        self.api_key = api_key or env_api_key or settings.gemini_api_key
 
         if not self.api_key:
             raise ValueError("Gemini API key is not configured.")
 
         genai.configure(api_key=self.api_key)
         self._model = None
-        self.model_name = settings.gemini_model_name
+        # prefer provided settings, fallback to class attribute
+        self.model_name = settings.gemini_model_name or self.__class__.model_name
 
     @property
     def model(self):
@@ -80,14 +94,23 @@ class GeminiClient:
 
             logger.debug("Received response from Gemini.")
 
-            # Extract usage metadata if available
+            # Extract usage metadata if available. Support both object with
+            # attributes (real SDK) and dict (mocks used in tests).
             usage_metadata = {}
-            if response.usage_metadata:
-                usage_metadata = {
-                    "prompt_token_count": response.usage_metadata.prompt_token_count,
-                    "candidates_token_count": response.usage_metadata.candidates_token_count,
-                    "total_token_count": response.usage_metadata.total_token_count,
-                }
+            if getattr(response, "usage_metadata", None):
+                meta = response.usage_metadata
+                if isinstance(meta, dict):
+                    usage_metadata = {
+                        "prompt_token_count": meta.get("prompt_token_count") or meta.get("promptTokenCount") or meta.get("prompt_token_count", None),
+                        "candidates_token_count": meta.get("candidates_token_count") or meta.get("candidatesTokenCount") or meta.get("candidates_token_count", None),
+                        "total_token_count": meta.get("total_token_count") or meta.get("totalTokenCount") or meta.get("total_token_count", None),
+                    }
+                else:
+                    usage_metadata = {
+                        "prompt_token_count": getattr(meta, "prompt_token_count", None),
+                        "candidates_token_count": getattr(meta, "candidates_token_count", None),
+                        "total_token_count": getattr(meta, "total_token_count", None),
+                    }
 
             return {
                 "status": AnalysisStatus.COMPLETED,
