@@ -38,8 +38,7 @@ def test_health_endpoint(client):
     assert data.get("application") == "xSweAgent"
 
 
-@patch('src.mcp_server.routers.github.get_github_service')
-def test_get_all_issues_endpoint(mock_get_service, client):
+def test_get_all_issues_endpoint(client):
     """Test the /github/issues endpoint."""
     
     # Mock the service method
@@ -47,8 +46,9 @@ def test_get_all_issues_endpoint(mock_get_service, client):
     mock_service_instance.get_all_issues.return_value = [
         Issue(id=1, number=1, title="API Test Issue", state=IssueState.OPEN, created_at="2023-01-01T00:00:00Z")
     ]
-    mock_get_service.return_value = mock_service_instance
-    
+    # Attach the mock service directly to the app state used by the dependency
+    app.state.github_service = mock_service_instance
+
     response = client.get("/api/v1/github/issues")
     
     assert response.status_code == 200
@@ -56,23 +56,20 @@ def test_get_all_issues_endpoint(mock_get_service, client):
     assert response.json()[0]["title"] == "API Test Issue"
 
 
-@patch('src.mcp_server.routers.analytics.get_analytics_engine')
-@patch('src.mcp_server.routers.analytics.get_github_service')
-def test_run_analysis_endpoint(mock_get_github, mock_get_analytics, client):
+def test_run_analysis_endpoint(client):
     """Test the /analytics/run endpoint."""
     
     # Mock GitHub service
     mock_github_service = AsyncMock()
     mock_github_service.get_all_issues.return_value = [Issue(id=1, number=1, title="Issue", state=IssueState.OPEN, created_at="2023-01-01")]
-    mock_get_github.return_value = mock_github_service
-    
-    # Mock Analytics engine
+    # Attach mocks directly to app state
+    app.state.github_service = mock_github_service
     mock_analytics_engine = AsyncMock()
     mock_analytics_engine.analyze.return_value = {
         "productivity": {"score": 0.9, "summary": "Excellent"}
     }
-    mock_get_analytics.return_value = mock_analytics_engine
-    
+    app.state.analytics_engine = mock_analytics_engine
+
     response = client.post("/api/v1/analytics/run")
     
     assert response.status_code == 200
