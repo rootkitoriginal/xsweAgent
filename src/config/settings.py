@@ -118,7 +118,7 @@ class SecurityConfig(PydanticBaseSettings):
 class AppConfig(PydanticBaseSettings):
     """Main application configuration."""
     
-    name: str = Field("xSwE Agent", env="APP_NAME")
+    name: str = Field("xSweAgent", env="APP_NAME")
     version: str = Field("1.0.0", env="APP_VERSION")
     description: str = Field(
         "GitHub Issues Monitor & Analytics with Gemini AI", 
