@@ -6,9 +6,9 @@ import pytest
 from unittest.mock import AsyncMock, patch
 import json
 
-from ..src.gemini_integration.client import GeminiClient
-from ..src.gemini_integration.analyzer import CodeAnalyzer
-from ..src.gemini_integration.models import CodeSnippet, AnalysisStatus
+from src.gemini_integration.client import GeminiClient
+from src.gemini_integration.analyzer import CodeAnalyzer
+from src.gemini_integration.models import CodeSnippet, AnalysisStatus
 
 
 @pytest.fixture

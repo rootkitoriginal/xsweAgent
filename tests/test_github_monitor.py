@@ -1,13 +1,18 @@
 """
-Tests for the GitHub monitor module.
+import pytest
+from unittest.mock import Mock, AsyncMock, patch
+
+from src.github_monitor.repository import GitHubRepository
+from src.github_monitor.service import GitHubIssuesService
+from src.github_monitor.models import Issue, IssueStatefor the GitHub monitor module.
 """
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from ..src.github_monitor.repository import GitHubRepository
-from ..src.github_monitor.service import GitHubIssuesService
-from ..src.github_monitor.models import Issue, IssueState
+from src.github_monitor.repository import GitHubRepository
+from src.github_monitor.service import GitHubIssuesService
+from src.github_monitor.models import Issue, IssueState
 
 
 @pytest.fixture

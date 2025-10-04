@@ -3,12 +3,13 @@ Tests for the Chart Generation module.
 """
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import Mock, MagicMock, patch
+from datetime import datetime, timedelta
 
-from ..src.charts.factory import ChartFactory
-from ..src.charts.generator import ChartGenerator
-from ..src.charts.models import ChartType, ChartConfiguration
-from ..src.analytics.strategies import AnalysisResult, AnalysisType
+from src.charts.factory import ChartFactory
+from src.charts.generator import ChartGenerator
+from src.charts.models import ChartType, ChartConfiguration
+from src.analytics.strategies import AnalysisResult, AnalysisType
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ import os
 import pytest
 from pydantic import ValidationError
 
-from ..src.config.settings import AppConfig, GitHubConfig, GeminiConfig, MCPServerConfig, get_settings
+from src.config.settings import AppConfig, GitHubConfig, GeminiConfig, MCPServerConfig, get_settings
 
 
 def test_app_config_defaults():

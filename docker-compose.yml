@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: xswe-agent
+    env_file:
+      - .env
     ports:
       - "8000:8000"
       - "9090:9090"  # Prometheus metrics

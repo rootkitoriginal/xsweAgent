@@ -5,9 +5,9 @@ Tests for the Analytics Engine and Strategies.
 import pytest
 from datetime import datetime, timedelta
 
-from ..src.analytics.engine import AnalyticsEngine, AnalyticsConfiguration, create_analytics_engine
-from ..src.analytics.strategies import ProductivityAnalysisStrategy, VelocityAnalysisStrategy
-from ..src.github_monitor.models import Issue, IssueState
+from src.analytics.engine import AnalyticsEngine, AnalyticsConfiguration, create_analytics_engine
+from src.analytics.strategies import ProductivityAnalysisStrategy, VelocityAnalysisStrategy
+from src.github_monitor.models import Issue, IssueState
 
 
 @pytest.fixture

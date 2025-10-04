@@ -7,7 +7,7 @@ import logging
 import google.generativeai as genai
 from typing import Optional, Dict, Any
 
-from ..config import get_config
+from ..config.settings import get_settings
 from .models import AnalysisStatus
 
 logger = logging.getLogger(__name__)
@@ -26,15 +26,15 @@ class GeminiClient:
         Args:
             api_key: The Google AI API key. If not provided, it's loaded from settings.
         """
-    settings = get_config()
-    self.api_key = api_key or settings.gemini_api_key
-        
+        settings = get_settings()
+        self.api_key = api_key or settings.gemini_api_key
+
         if not self.api_key:
             raise ValueError("Gemini API key is not configured.")
-            
+
         genai.configure(api_key=self.api_key)
         self._model = None
-    self.model_name = settings.gemini_model_name
+        self.model_name = settings.gemini_model_name
         
     @property
     def model(self):

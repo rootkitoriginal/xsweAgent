@@ -18,28 +18,38 @@ class GitHubConfig(PydanticBaseSettings):
     # without immediate API credentials. Callers should validate presence
     # where external calls are made.
     token: Optional[str] = Field(None, env="GITHUB_TOKEN", description="GitHub personal access token")
+    # Allow either a single GITHUB_REPO env var (owner/name) or separate owner/name vars.
+    repo: Optional[str] = Field(None, env="GITHUB_REPO")
     repo_owner: str = Field("xLabInternet", env="GITHUB_REPO_OWNER")
     repo_name: str = Field("xRatEcosystem", env="GITHUB_REPO_NAME")
     rate_limit_per_hour: int = Field(5000, env="GITHUB_RATE_LIMIT_PER_HOUR")
-    
-    @validator("token")
-    def validate_token(cls, v):
-        # Only warn at validation time; do not raise to keep startup stable.
-        if not v:
-            return v
-        if v == "your_github_personal_access_token_here":
-            raise ValueError("Please replace the placeholder GitHub token in your environment.")
-        return v
+
+    @property
+    def github_token(self) -> str:
+        return self.token
+
+    @property
+    def github_repo(self) -> str:
+        if self.repo:
+            return self.repo
+        return f"{self.repo_owner}/{self.repo_name}"
 
 
 class GeminiConfig(PydanticBaseSettings):
     """Google Gemini AI configuration."""
-
     # API key optional to allow local development without immediate access
     api_key: Optional[str] = Field(None, env="GEMINI_API_KEY", description="Google Gemini API key")
-    model: str = Field("gemini-2.5-flash", env="GEMINI_MODEL")
+    model: str = Field("gemini-1.5-flash", env="GEMINI_MODEL")
     rate_limit_per_minute: int = Field(60, env="GEMINI_RATE_LIMIT_PER_MINUTE")
-    
+
+    @property
+    def gemini_api_key(self) -> Optional[str]:
+        return self.api_key
+
+    @property
+    def gemini_model_name(self) -> str:
+        return self.model
+
     @validator("api_key")
     def validate_api_key(cls, v):
         if not v:
@@ -52,9 +62,10 @@ class GeminiConfig(PydanticBaseSettings):
 class MCPServerConfig(PydanticBaseSettings):
     """MCP Server configuration."""
     
-    host: str = Field("localhost", env="MCP_SERVER_HOST")
+    host: str = Field("0.0.0.0", env="MCP_SERVER_HOST")
     port: int = Field(8000, env="MCP_SERVER_PORT")
     debug: bool = Field(True, env="MCP_SERVER_DEBUG")
+    cors_origins: str = Field("*", env="CORS_ORIGINS")
     
     @property
     def url(self) -> str:
@@ -138,22 +149,14 @@ class AppConfig(PydanticBaseSettings):
     
     # pydantic v2: use model_config for settings
     model_config = {
-        "env_file": ".env",
+        # Avoid reading project .env automatically so test monkeypatching of
+        # os.environ is authoritative during pytest runs.
+        "env_file": None,
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
         # Allow ignoring extra env vars at the top-level composition
         "extra": "ignore",
     }
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Initialize sub-configurations
-        self.github = GitHubConfig()
-        self.gemini = GeminiConfig()
-        self.mcp_server = MCPServerConfig()
-        self.cache = CacheConfig()
-        self.analytics = AnalyticsConfig()
-        self.logging = LoggingConfig()
-        self.security = SecurityConfig()
 
     # --- Backwards-compatible property aliases (flattened names) ---
     @property
