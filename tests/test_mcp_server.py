@@ -38,7 +38,7 @@ def test_health_endpoint(client):
     assert data.get("application") == "xSweAgent"
 
 
-@patch('..src.mcp_server.routers.github.get_github_service')
+@patch('src.mcp_server.routers.github.get_github_service')
 def test_get_all_issues_endpoint(mock_get_service, client):
     """Test the /github/issues endpoint."""
     
@@ -56,8 +56,8 @@ def test_get_all_issues_endpoint(mock_get_service, client):
     assert response.json()[0]["title"] == "API Test Issue"
 
 
-@patch('..src.mcp_server.routers.analytics.get_analytics_engine')
-@patch('..src.mcp_server.routers.analytics.get_github_service')
+@patch('src.mcp_server.routers.analytics.get_analytics_engine')
+@patch('src.mcp_server.routers.analytics.get_github_service')
 def test_run_analysis_endpoint(mock_get_github, mock_get_analytics, client):
     """Test the /analytics/run endpoint."""
     
