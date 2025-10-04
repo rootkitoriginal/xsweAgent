@@ -84,4 +84,4 @@ def test_run_analysis_endpoint(client):
     
     assert response.status_code == 200
     assert "productivity" in response.json()
-    assert response.json()["productivity"]["score"] == 0.9
+    assert response.json()["productivity"]["data"]["score"] == 0.9
