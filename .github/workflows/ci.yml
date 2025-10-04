@@ -1,0 +1,47 @@
+name: 'CI — Lint & Test'
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git gcc
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Format check (black/isort)
+        run: |
+          black --check . || (echo 'Run `black .` to fix formatting' && exit 1)
+          isort --check-only . || (echo 'Run `isort .` to fix imports' && exit 1)
+
+      - name: Lint (flake8)
+        run: |
+          flake8 .
+
+      - name: Run tests
+        run: |
+          pytest -q

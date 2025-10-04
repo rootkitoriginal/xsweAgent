@@ -1,0 +1,23 @@
+{
+  "name": "xsweagent-devops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "flake8 .",
+    "format": "black . && isort .",
+    "test": "pytest -q",
+    "ci": "npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0"
+  },
+  "lint-staged": {
+    "**/*.{py,pyi}": [
+      "isort --profile black",
+      "black",
+      "flake8 --max-line-length=88"
+    ]
+  }
+}

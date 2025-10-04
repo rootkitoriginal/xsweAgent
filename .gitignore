@@ -39,3 +39,5 @@ htmlcov/
 /.mypy_cache/
 /.ruff_cache/
 /.venv/
+.gemini/
+gha-creds-*.json

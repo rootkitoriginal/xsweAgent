@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run tests before allowing push
+npm run test || { echo 'Tests failed - aborting push'; exit 1; }
