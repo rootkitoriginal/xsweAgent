@@ -229,3 +229,74 @@ def track_api_calls(endpoint: str):
             return sync_wrapper
 
     return decorator
+
+
+def track_execution_time(operation_name: str):
+    """
+    Decorator to track execution time of operations.
+    
+    Args:
+        operation_name: Name of the operation being tracked
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            collector = get_metrics_collector()
+            start_time = time.time()
+            
+            try:
+                result = await func(*args, **kwargs)
+                duration_ms = (time.time() - start_time) * 1000
+                
+                collector.record(
+                    f"{operation_name}_duration_ms",
+                    duration_ms,
+                    labels={"status": "success"},
+                )
+                
+                return result
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                
+                collector.record(
+                    f"{operation_name}_duration_ms",
+                    duration_ms,
+                    labels={"status": "error"},
+                )
+                
+                raise
+                
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            collector = get_metrics_collector()
+            start_time = time.time()
+            
+            try:
+                result = func(*args, **kwargs)
+                duration_ms = (time.time() - start_time) * 1000
+                
+                collector.record(
+                    f"{operation_name}_duration_ms",
+                    duration_ms,
+                    labels={"status": "success"},
+                )
+                
+                return result
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                
+                collector.record(
+                    f"{operation_name}_duration_ms",
+                    duration_ms,
+                    labels={"status": "error"},
+                )
+                
+                raise
+        
+        import asyncio
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+            
+    return decorator

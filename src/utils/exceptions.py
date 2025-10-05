@@ -6,7 +6,14 @@ Custom exceptions for xSwE Agent infrastructure.
 class XSWEAgentError(Exception):
     """Base exception for all xSwE Agent errors."""
 
-    pass
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}
+
+
+# Alias for backwards compatibility
+XSWEBaseException = XSWEAgentError
 
 
 class RetryExhaustedError(XSWEAgentError):
@@ -29,5 +36,11 @@ class HealthCheckError(XSWEAgentError):
 
 class RateLimitError(XSWEAgentError):
     """Raised when rate limit is exceeded."""
+
+    pass
+
+
+class ChartGenerationError(XSWEAgentError):
+    """Raised when chart generation fails."""
 
     pass
