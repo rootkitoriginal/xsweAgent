@@ -44,7 +44,7 @@ class ServiceHealth:
 class HealthCheck:
     """
     Health check manager for monitoring multiple services.
-    
+
     Example:
         health = HealthCheck()
         health.register("database", lambda: check_db_connection())

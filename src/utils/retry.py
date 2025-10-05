@@ -121,7 +121,7 @@ def retry(
 class CircuitBreaker:
     """
     Circuit breaker implementation for service protection.
-    
+
     Prevents cascading failures by temporarily blocking calls to failing services.
     """
 

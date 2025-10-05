@@ -41,7 +41,7 @@ logger = get_logger(__name__)
 class ChartGenerator:
     """
     Generates chart images from ChartConfiguration data using multiple backends.
-    
+
     Supports:
     - Matplotlib: Static high-quality charts (PNG, SVG, PDF)
     - Plotly: Interactive web-based charts (HTML, PNG, SVG)
@@ -51,7 +51,7 @@ class ChartGenerator:
         self.config = config
         self._styling = config.styling
         self._backend = backend or config.backend
-        
+
         # Initialize matplotlib if using that backend
         if self._backend == ChartBackend.MATPLOTLIB:
             self._fig, self._ax = plt.subplots(
@@ -75,20 +75,20 @@ class ChartGenerator:
         """
         start_time = time.time()
         export_opts = export_options or ExportOptions()
-        
+
         try:
             if self._backend == ChartBackend.MATPLOTLIB:
                 result = self._generate_matplotlib(export_opts)
             else:
                 result = self._generate_plotly(export_opts)
-            
+
             # Calculate generation time
             generation_time_ms = (time.time() - start_time) * 1000
-            
+
             # Return ChartResult if using new format, GeneratedChart for backward compatibility
             if isinstance(result, GeneratedChart):
                 return result
-            
+
             # Log performance
             logger.info(
                 f"Generated {self.config.chart_type.value} chart",
@@ -98,7 +98,7 @@ class ChartGenerator:
                 generation_time_ms=generation_time_ms,
                 data_points=len(self.config.x_data),
             )
-            
+
             return result
 
         except Exception as e:
@@ -117,7 +117,7 @@ class ChartGenerator:
                     "backend": self._backend.value,
                 }
             )
-    
+
     def _generate_matplotlib(self, export_options: ExportOptions) -> GeneratedChart:
         """Generate chart using Matplotlib backend."""
         self._apply_styling()
@@ -146,7 +146,7 @@ class ChartGenerator:
         # Export to specified format
         img_buffer = io.BytesIO()
         export_format = export_options.format.value
-        
+
         # Map export format to matplotlib format
         if export_format == "png":
             fmt = "png"
@@ -156,7 +156,7 @@ class ChartGenerator:
             fmt = "pdf"
         else:
             fmt = "png"  # Default to PNG
-        
+
         self._fig.savefig(
             img_buffer,
             format=fmt,
@@ -177,7 +177,7 @@ class ChartGenerator:
             chart_type=self.config.chart_type,
             metadata=self._get_metadata(),
         )
-    
+
     def _generate_plotly(self, export_options: ExportOptions) -> GeneratedChart:
         """Generate chart using Plotly backend."""
         chart_method_map = {
@@ -192,12 +192,12 @@ class ChartGenerator:
         }
 
         chart_method = chart_method_map.get(self.config.chart_type)
-        
+
         if not chart_method:
             raise ValueError(f"Unsupported chart type for Plotly: {self.config.chart_type}")
 
         self._plotly_fig = chart_method()
-        
+
         # Apply styling
         self._plotly_fig.update_layout(
             title=self.config.title,
@@ -209,14 +209,14 @@ class ChartGenerator:
 
         # Export to specified format
         export_format = export_options.format.value
-        
+
         if export_format == "html":
             # Export as HTML
             html_buffer = io.StringIO()
             write_html(self._plotly_fig, html_buffer, include_plotlyjs='cdn')
             html_content = html_buffer.getvalue()
             filename = f"{self.config.title.replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d%H%M%S')}.html"
-            
+
             return GeneratedChart(
                 filename=filename,
                 image_data=html_content.encode('utf-8'),
@@ -232,9 +232,9 @@ class ChartGenerator:
                 width=export_options.width or 1200,
                 height=export_options.height or 800,
             )
-            
+
             filename = f"{self.config.title.replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{export_format}"
-            
+
             return GeneratedChart(
                 filename=filename,
                 image_data=img_bytes,
@@ -242,14 +242,14 @@ class ChartGenerator:
                 chart_type=self.config.chart_type,
                 metadata=self._get_metadata(),
             )
-    
+
     def export(self, format: ExportFormat) -> bytes:
         """
         Export chart to specified format.
-        
+
         Args:
             format: Export format (PNG, SVG, PDF, HTML)
-            
+
         Returns:
             Chart data as bytes
         """
@@ -392,11 +392,11 @@ class ChartGenerator:
                 label=f"Average Velocity ({self.config.average_line:.2f})",
             )
         self._ax.legend()
-    
+
     def _create_time_series_chart(self) -> None:
         """Create time series chart with date handling."""
         x_data = self.config.x_data
-        
+
         # Auto-format dates if x-axis is datetime
         if all(isinstance(i, datetime) for i in x_data):
             x_data = mdates.date2num(x_data)
@@ -414,11 +414,11 @@ class ChartGenerator:
                 marker="o",
                 linestyle="-",
             )
-        
+
         self._ax.grid(True, alpha=0.3)
         if self._styling.show_legend:
             self._ax.legend()
-    
+
     def _create_heatmap_chart(self) -> None:
         """Create heatmap for correlation or activity patterns."""
         # Expect y_data to be 2D array or dict of lists
@@ -437,21 +437,21 @@ class ChartGenerator:
                 y_labels = None
         else:
             raise ValueError("Heatmap requires 2D data structure")
-        
+
         im = self._ax.imshow(heatmap_data, cmap=self._styling.palette, aspect="auto")
-        
+
         # Set ticks
         if self.config.x_data:
             self._ax.set_xticks(np.arange(len(self.config.x_data)))
             self._ax.set_xticklabels(self.config.x_data, rotation=45, ha="right")
-        
+
         if y_labels is not None:
             self._ax.set_yticks(np.arange(len(y_labels)))
             self._ax.set_yticklabels(y_labels)
-        
+
         # Add colorbar
         self._fig.colorbar(im, ax=self._ax)
-        
+
         # Add text annotations if data is small enough
         if heatmap_data.shape[0] <= 20 and heatmap_data.shape[1] <= 20:
             for i in range(heatmap_data.shape[0]):
@@ -460,9 +460,9 @@ class ChartGenerator:
                         j, i, f"{heatmap_data[i, j]:.1f}",
                         ha="center", va="center", color="w", fontsize=8
                     )
-    
+
     # --- Plotly Chart Creation Methods ---
-    
+
     def _create_plotly_bar(self) -> go.Figure:
         """Create bar chart with Plotly."""
         if isinstance(self.config.y_data, dict):
@@ -472,7 +472,7 @@ class ChartGenerator:
         else:
             fig = go.Figure(data=[go.Bar(x=self.config.x_data, y=self.config.y_data)])
         return fig
-    
+
     def _create_plotly_line(self) -> go.Figure:
         """Create line chart with Plotly."""
         if isinstance(self.config.y_data, dict):
@@ -486,7 +486,7 @@ class ChartGenerator:
                 x=self.config.x_data, y=self.config.y_data, mode='lines+markers'
             )])
         return fig
-    
+
     def _create_plotly_pie(self) -> go.Figure:
         """Create pie chart with Plotly."""
         fig = go.Figure(data=[go.Pie(
@@ -494,7 +494,7 @@ class ChartGenerator:
             values=self.config.y_data
         )])
         return fig
-    
+
     def _create_plotly_scatter(self) -> go.Figure:
         """Create scatter plot with Plotly."""
         fig = go.Figure(data=[go.Scatter(
@@ -503,7 +503,7 @@ class ChartGenerator:
             mode='markers'
         )])
         return fig
-    
+
     def _create_plotly_area(self) -> go.Figure:
         """Create area chart with Plotly."""
         if isinstance(self.config.y_data, dict):
@@ -519,12 +519,12 @@ class ChartGenerator:
                 fill='tozeroy'
             )])
         return fig
-    
+
     def _create_plotly_histogram(self) -> go.Figure:
         """Create histogram with Plotly."""
         fig = go.Figure(data=[go.Histogram(x=self.config.y_data)])
         return fig
-    
+
     def _create_plotly_time_series(self) -> go.Figure:
         """Create time series chart with Plotly."""
         if isinstance(self.config.y_data, dict):
@@ -539,11 +539,11 @@ class ChartGenerator:
                 y=self.config.y_data,
                 mode='lines+markers'
             )])
-        
+
         # Configure time axis
         fig.update_xaxes(type='date')
         return fig
-    
+
     def _create_plotly_heatmap(self) -> go.Figure:
         """Create heatmap with Plotly."""
         if isinstance(self.config.y_data, dict):
@@ -556,7 +556,7 @@ class ChartGenerator:
         else:
             z_data = np.array([[val] for val in self.config.y_data])
             y_labels = None
-        
+
         fig = go.Figure(data=go.Heatmap(
             z=z_data,
             x=self.config.x_data,

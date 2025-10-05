@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class MetricsCollector:
     """
     Centralized metrics collection for performance monitoring.
-    
+
     Example:
         metrics = MetricsCollector()
         metrics.record_execution_time("chart_generation", 125.5)

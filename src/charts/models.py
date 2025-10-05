@@ -79,7 +79,7 @@ class ChartConfiguration:
     # For specialized charts
     ideal_line: Optional[List[float]] = None  # For burndown charts
     average_line: Optional[float] = None  # For velocity charts
-    
+
     # Backend selection
     backend: ChartBackend = ChartBackend.MATPLOTLIB
 

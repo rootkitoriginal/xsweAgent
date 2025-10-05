@@ -31,7 +31,7 @@ class ChartFactory:
     ) -> Optional[ChartConfiguration]:
         """
         Create a chart configuration with specified type and backend.
-        
+
         This is the main factory method for creating charts from raw data.
 
         Args:
@@ -42,7 +42,7 @@ class ChartFactory:
 
         Returns:
             ChartConfiguration ready for rendering
-            
+
         Example:
             config = ChartFactory.create(
                 chart_type=ChartType.TIME_SERIES,
@@ -58,7 +58,7 @@ class ChartFactory:
             title = kwargs.get("title", f"{chart_type.value.title()} Chart")
             x_label = kwargs.get("x_label", "X Axis")
             y_label = kwargs.get("y_label", "Y Axis")
-            
+
             # Parse data based on format
             if isinstance(data, dict):
                 x_data = data.get("x_data", data.get("x", []))
@@ -67,7 +67,7 @@ class ChartFactory:
                 x_data, y_data = data
             else:
                 raise ValueError("Data must be dict with x/y keys or tuple of (x, y)")
-            
+
             config = ChartConfiguration(
                 title=title,
                 x_label=x_label,
@@ -78,19 +78,19 @@ class ChartFactory:
                 backend=backend,
                 **{k: v for k, v in kwargs.items() if k not in ["title", "x_label", "y_label"]}
             )
-            
+
             logger.info(
-                f"Created chart configuration",
+                "Created chart configuration",
                 chart_type=chart_type.value,
                 backend=backend.value,
                 data_points=len(x_data)
             )
-            
+
             return config
-            
+
         except Exception as e:
             logger.error(
-                f"Failed to create chart configuration",
+                "Failed to create chart configuration",
                 chart_type=chart_type.value,
                 error=str(e)
             )
@@ -102,7 +102,7 @@ class ChartFactory:
     ) -> Optional[ChartData]:
         """
         Create a chart configuration based on the analysis result.
-        
+
         Legacy method for backward compatibility with analytics integration.
 
         Args:
