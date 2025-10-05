@@ -82,7 +82,7 @@ class GeminiClient:
         return self._model
 
     @retry(RetryPolicies.GEMINI_API)
-    @circuit_breaker(CircuitBreakerPolicies.GEMINI_API, name="gemini_api")
+    @circuit_breaker(name="gemini_api", config=CircuitBreakerPolicies.gemini_api())
     @track_api_calls("gemini_generate_content")
     async def generate_content(
         self, prompt: str, generation_config: Optional[Dict[str, Any]] = None
