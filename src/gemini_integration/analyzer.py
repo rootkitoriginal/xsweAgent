@@ -9,8 +9,7 @@ import uuid
 from typing import List, Optional
 
 from .client import GeminiClient
-from .models import (AnalysisResult, AnalysisStatus, CodeReport, CodeSnippet,
-                     Suggestion)
+from .models import AnalysisResult, AnalysisStatus, CodeReport, CodeSnippet, Suggestion
 
 logger = logging.getLogger(__name__)
 

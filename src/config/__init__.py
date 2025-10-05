@@ -2,9 +2,18 @@
 Configuration package initialization.
 """
 
-from .settings import (AnalyticsConfig, AppConfig, CacheConfig, GeminiConfig,
-                       GitHubConfig, LoggingConfig, MCPServerConfig,
-                       SecurityConfig, ensure_directories, get_project_root)
+from .settings import (
+    AnalyticsConfig,
+    AppConfig,
+    CacheConfig,
+    GeminiConfig,
+    GitHubConfig,
+    LoggingConfig,
+    MCPServerConfig,
+    SecurityConfig,
+    ensure_directories,
+    get_project_root,
+)
 from .settings import get_settings as get_config
 
 __all__ = [
