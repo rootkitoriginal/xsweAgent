@@ -151,11 +151,6 @@ class EnhancedLoggerSetup:
             root.addHandler(file_handler)
 
 
-# Legacy class for backward compatibility
-class LoggerSetup(EnhancedLoggerSetup):
-    """Legacy logger setup - redirects to enhanced version."""
-    pass
-
     def _setup_structlog(self):
         """Configure structlog for structured logging."""
         structlog.configure(
@@ -552,3 +547,9 @@ def with_correlation(func):
         return async_wrapper
     else:
         return sync_wrapper
+
+
+# Legacy class for backward compatibility
+class LoggerSetup(EnhancedLoggerSetup):
+    """Legacy logger setup - redirects to enhanced version."""
+    pass

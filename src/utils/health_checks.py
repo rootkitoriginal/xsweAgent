@@ -603,6 +603,11 @@ def get_health_checker() -> HealthChecker:
     return _health_checker
 
 
+# Aliases for compatibility
+get_health_check_registry = get_health_checker
+HealthCheck = BaseHealthCheck
+
+
 def setup_default_health_checks(
     github_token: Optional[str] = None,
     gemini_api_key: Optional[str] = None,

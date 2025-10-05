@@ -407,3 +407,14 @@ def retry_gemini_api(**kwargs):
 def retry_database(**kwargs):
     """Retry with database optimized settings."""
     return retry(policy=RetryPolicy.database())
+
+
+# Predefined retry policies for convenience
+class RetryPolicies:
+    """Collection of predefined retry policies."""
+    
+    FAST = RetryPolicy.fast_operations()
+    STANDARD = RetryPolicy.fast_operations()
+    GITHUB_API = RetryPolicy.github_api()
+    GEMINI_API = RetryPolicy.gemini_api()
+    DATABASE = RetryPolicy.database()

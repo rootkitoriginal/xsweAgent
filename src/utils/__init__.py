@@ -1,64 +1,58 @@
 """
-Infrastructure utilities for error handling, retry logic, and monitoring.
-
-This module provides robust infrastructure components for the xSwE Agent:
-- Retry mechanisms with exponential backoff
-- Circuit breaker patterns for external APIs
-- Health checks for system components
-- Metrics collection and monitoring
+Utils Module
+Infrastructure components for retry logic, circuit breakers, health checks, and metrics.
 """
 
-from .retry import retry, RetryPolicy, RetryConfig
-from .circuit_breaker import circuit_breaker, CircuitBreaker, CircuitState
-from .health_checks import (
-    HealthChecker, 
-    HealthStatus, 
-    HealthCheckResult,
-    setup_default_health_checks,
-    get_health_checker,
-)
-from .metrics import (
-    MetricsCollector, 
-    Counter, 
-    Histogram, 
-    Gauge,
-    get_metrics_collector,
-    track_api_calls,
-    track_execution_time,
-)
+from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies
 from .exceptions import (
-    XSWEException,
-    APIException,
-    GitHubAPIException,
-    GeminiAPIException,
-    RetryException,
-    CircuitBreakerException,
-    HealthCheckException,
-    ConfigurationException,
-    ValidationException,
+    ChartGenerationError,
+    CircuitBreakerError,
+    HealthCheckError,
+    RateLimitError,
+    RetryExhaustedError,
+    XSWEAgentError,
+    XSWEBaseException,
 )
+from .health_checks import (
+    BaseHealthCheck,
+    HealthCheck,
+    HealthChecker,
+    HealthCheckResult,
+    HealthStatus,
+    get_health_checker,
+    get_health_check_registry,
+)
+from .metrics import MetricsCollector, get_metrics_collector, track_api_calls, track_execution_time
+from .retry import BackoffStrategy, RetryPolicies, RetryPolicy, retry
 
 __all__ = [
-    # Retry system
+    # Retry
     "retry",
-    "RetryPolicy", 
-    "RetryConfig",
-    # Circuit breaker
-    "circuit_breaker",
+    "RetryPolicy",
+    "RetryPolicies",
+    "BackoffStrategy",
+    # Circuit Breaker
     "CircuitBreaker",
-    "CircuitState",
-    # Health checks
+    "CircuitBreakerPolicies",
+    # Health Checks
+    "BaseHealthCheck",
+    "HealthCheck",
     "HealthChecker",
+    "HealthCheckResult",
     "HealthStatus",
+    "get_health_checker",
+    "get_health_check_registry",
     # Metrics
     "MetricsCollector",
-    "Counter",
-    "Histogram", 
-    "Gauge",
+    "get_metrics_collector",
+    "track_api_calls",
+    "track_execution_time",
     # Exceptions
-    "XSWEException",
-    "APIException",
-    "RetryException",
-    "CircuitBreakerException",
-    "HealthCheckException",
+    "XSWEAgentError",
+    "XSWEBaseException",
+    "RetryExhaustedError",
+    "CircuitBreakerError",
+    "HealthCheckError",
+    "RateLimitError",
+    "ChartGenerationError",
 ]

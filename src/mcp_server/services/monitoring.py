@@ -112,53 +112,34 @@ def register_health_checks():
     """Register all health checks."""
     registry = get_health_check_registry()
 
-    # Register core service health checks
-    registry.register(
-        HealthCheck(
-            name="github_service",
-            check_func=check_github_service,
-            timeout=5.0,
-            critical=True,
-        )
-    )
+    # Create simple health check classes
+    class GitHubServiceHealthCheck(HealthCheck):
+        def __init__(self):
+            super().__init__("github_service")
+        
+        async def _perform_check(self) -> HealthCheckResult:
+            return await check_github_service()
 
-    registry.register(
-        HealthCheck(
-            name="analytics_engine",
-            check_func=check_analytics_engine,
-            timeout=5.0,
-            critical=True,
-        )
-    )
+    class AnalyticsEngineHealthCheck(HealthCheck):
+        def __init__(self):
+            super().__init__("analytics_engine")
+        
+        async def _perform_check(self) -> HealthCheckResult:
+            return await check_analytics_engine()
 
-    registry.register(
-        HealthCheck(
-            name="gemini_client",
-            check_func=check_gemini_client,
-            timeout=5.0,
-            critical=False,  # Non-critical
-        )
-    )
+    class GeminiClientHealthCheck(HealthCheck):
+        def __init__(self):
+            super().__init__("gemini_client")
+        
+        async def _perform_check(self) -> HealthCheckResult:
+            return await check_gemini_client()
 
-    registry.register(
-        HealthCheck(
-            name="cache_service",
-            check_func=check_cache_service,
-            timeout=3.0,
-            critical=False,
-        )
-    )
+    # Register health checks
+    registry.register_check(GitHubServiceHealthCheck())
+    registry.register_check(AnalyticsEngineHealthCheck())
+    registry.register_check(GeminiClientHealthCheck())
 
-    registry.register(
-        HealthCheck(
-            name="metrics_collector",
-            check_func=check_metrics_collector,
-            timeout=3.0,
-            critical=False,
-        )
-    )
-
-    logger.info(f"Registered {len(registry.list_checks())} health checks")
+    logger.info(f"Registered 3 health checks")
 
 
 async def run_periodic_health_checks(interval: int = 60):
