@@ -19,6 +19,25 @@ class ChartType(Enum):
     HISTOGRAM = "histogram"
     BURNDOWN = "burndown"  # Specialized chart
     VELOCITY = "velocity"  # Specialized chart
+    TIME_SERIES = "time_series"  # Time-based line chart
+    HEATMAP = "heatmap"  # Activity/correlation heatmap
+
+
+class ChartBackend(Enum):
+    """Enum for chart rendering backends."""
+
+    MATPLOTLIB = "matplotlib"
+    PLOTLY = "plotly"
+
+
+class ExportFormat(Enum):
+    """Enum for chart export formats."""
+
+    PNG = "png"
+    SVG = "svg"
+    PDF = "pdf"
+    HTML = "html"
+    JSON = "json"
 
 
 @dataclass
@@ -60,6 +79,42 @@ class ChartConfiguration:
     # For specialized charts
     ideal_line: Optional[List[float]] = None  # For burndown charts
     average_line: Optional[float] = None  # For velocity charts
+    
+    # Backend selection
+    backend: ChartBackend = ChartBackend.MATPLOTLIB
+
+
+@dataclass
+class ExportOptions:
+    """Options for exporting charts."""
+
+    format: ExportFormat = ExportFormat.PNG
+    dpi: int = 150
+    width: Optional[int] = None
+    height: Optional[int] = None
+    transparent: bool = False
+    quality: int = 95  # For formats that support quality settings
+
+
+@dataclass
+class ChartResult:
+    """
+    Enhanced result object for generated charts with full metadata.
+    """
+
+    filename: str
+    image_data: bytes
+    format: ExportFormat
+    chart_type: ChartType
+    backend: ChartBackend
+    metadata: Dict[str, Any]
+    generation_time_ms: float = 0.0
+    data_points: int = 0
+
+    def save(self, path: str) -> None:
+        """Save the chart to a file."""
+        with open(path, "wb") as f:
+            f.write(self.image_data)
 
 
 @dataclass
@@ -94,6 +149,7 @@ class ChartData:
 class GeneratedChart:
     """
     Represents a generated chart, including the image data and metadata.
+    Legacy model for backward compatibility.
     """
 
     filename: str
