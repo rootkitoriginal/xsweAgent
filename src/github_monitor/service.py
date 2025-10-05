@@ -11,8 +11,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from ..config import get_config
 from ..config.logging_config import get_logger
 from .models import Issue, IssuePriority, IssueState, IssueType
-from .repository import (GitHubRepositoryInterface, SearchCriteria,
-                         create_github_repository)
+from .repository import (
+    GitHubRepositoryInterface,
+    SearchCriteria,
+    create_github_repository,
+)
 
 
 @dataclass

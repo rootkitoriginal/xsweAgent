@@ -45,7 +45,7 @@ class GitHubRepository:
         repo_name: Optional[str] = None,
         token: Optional[str] = None,
         api_token: Optional[str] = None,
-        **_
+        **_,
     ):
         self.owner = owner
         self.repo_name = repo_name
