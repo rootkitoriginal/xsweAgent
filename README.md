@@ -36,7 +36,34 @@ xsweAgent/
 └── TODO.md                      # Lista de tarefas
 ```
 
-## 🚀 Instalação
+## � Plano de Desenvolvimento
+
+**Status**: ✅ Pronto para Execução (Janeiro 2025)
+
+### Documentação de Planejamento
+- **[Resumo Executivo](docs/EXECUTIVE_SUMMARY.md)** - Visão geral e status atual
+- **[Prioridades](docs/PRIORITIES.md)** - Matriz P0-P3 e roadmap de negócio
+- **[Workflow de Desenvolvimento](docs/DEVELOPMENT_WORKFLOW.md)** - Branches e processo git
+- **[Plano da Equipe](docs/TEAM_PLAN.md)** - Divisão de responsabilidades
+- **[Templates de Sincronização](docs/SYNC_TEMPLATES.md)** - Reuniões e processos
+
+### Quick Start para Desenvolvedores
+```bash
+# 1. Setup do ambiente
+git checkout develop
+pip install -r requirements.txt
+
+# 2. Escolher feature branch
+git checkout feature/analytics-engine  # ou sua especialidade
+
+# 3. Verificar testes
+pytest tests/test_examples.py -v
+
+# 4. Começar desenvolvimento
+# Ver docs/TEAM_PLAN.md para tarefas específicas
+```
+
+## �🚀 Instalação
 
 1. Clone o repositório:
 ```bash
