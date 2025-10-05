@@ -137,15 +137,20 @@ async def test_analytics_to_charts_integration(mock_github_repo):
     assert chart.has_data()
 ```
 
-### Performance Tests
-```python
-# Example performance test
-@pytest.mark.performance
-async def test_analytics_performance_1000_issues():
-    large_dataset = MockDataGenerator.github_issues(count=1000)
+# Example integration test
+# from src.analytics import AnalyticsEngine
+# from src.charts import ChartFactory, ChartType
+@pytest.mark.integration
+async def test_analytics_to_charts_integration(mock_github_repo):
+    # Test full data flow
+    analytics = AnalyticsEngine()
+    chart_factory = ChartFactory()
     
-    start_time = time.time()
-    analyzer = ProductivityAnalyzer()
+    metrics = await analytics.analyze(mock_github_repo)
+    chart = chart_factory.create(ChartType.TIME_SERIES, metrics)
+    
+    assert chart is not None
+    assert chart.has_data()
     result = await analyzer.calculate(large_dataset)
     execution_time = time.time() - start_time
     
