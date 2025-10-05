@@ -3,19 +3,17 @@ Tests for CachedGitHubRepository caching functionality.
 """
 
 import asyncio
-import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Add src to path for direct import
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-# Direct import to avoid __init__.py issues
-from github_monitor.repository import (AwaitableList, CachedGitHubRepository,
-                                       SearchCriteria)
+# Import using proper package structure
+from src.github_monitor.repository import (
+    AwaitableList,
+    CachedGitHubRepository,
+    SearchCriteria,
+)
 
 
 @pytest.fixture
