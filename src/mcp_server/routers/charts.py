@@ -80,7 +80,7 @@ async def generate_chart_for_analysis(
 
     except ValueError:
         raise HTTPException(
-            status_code=400, detail=f"Invalid chart type or analysis type provided."
+            status_code=400, detail="Invalid chart type or analysis type provided."
         )
     except Exception as e:
         logger.error(f"Failed to generate chart: {e}", exc_info=True)
