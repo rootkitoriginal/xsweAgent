@@ -4,14 +4,13 @@ Manages multiple analysis strategies and provides consolidated insights.
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set, Type
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set, Type
 
 from ..github_monitor.models import Issue, IssueState
-from .strategies import AnalysisStrategy, AnalysisResult, AnalysisType
-
+from .strategies import AnalysisResult, AnalysisStrategy, AnalysisType
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +203,9 @@ class AnalyticsEngine:
             if updated_times:
                 data_freshness = max(updated_times)
             else:
-                created_times = [issue.created_at for issue in issues if issue.created_at]
+                created_times = [
+                    issue.created_at for issue in issues if issue.created_at
+                ]
                 data_freshness = max(created_times) if created_times else now
 
         # Filter issues for time window calculation
@@ -348,12 +349,9 @@ async def create_analytics_engine(
     Returns:
         Configured AnalyticsEngine instance
     """
-    from .strategies import (
-        ProductivityAnalysisStrategy,
-        VelocityAnalysisStrategy,
-        BurndownAnalysisStrategy,
-        QualityAnalysisStrategy,
-    )
+    from .strategies import (BurndownAnalysisStrategy,
+                             ProductivityAnalysisStrategy,
+                             QualityAnalysisStrategy, VelocityAnalysisStrategy)
 
     engine = AnalyticsEngine(configuration)
 
