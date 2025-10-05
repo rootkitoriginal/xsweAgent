@@ -154,17 +154,21 @@ async def test_analytics_to_charts_integration(mock_github_repo):
     result = await analyzer.calculate(large_dataset)
     execution_time = time.time() - start_time
     
+# Example performance test
+# import time
+# from tests.utils import MockDataGenerator
+# from src.analytics.strategies import ProductivityAnalyzer
+@pytest.mark.performance
+async def test_analytics_performance_1000_issues():
+    large_dataset = MockDataGenerator.github_issues(count=1000)
+    
+    start_time = time.time()
+    analyzer = ProductivityAnalyzer()
+    result = await analyzer.calculate(large_dataset)
+    execution_time = time.time() - start_time
+    
     assert execution_time < 2.0  # Max 2 seconds
     assert result is not None
-```
-
-## 📊 Quality Metrics
-
-### Coverage Targets
-- **Overall**: >90%
-- **Critical paths**: 100%
-- **New code**: >95%
-- **Business logic**: >95%
 
 ### Performance Targets
 - **Unit tests**: <30s total
