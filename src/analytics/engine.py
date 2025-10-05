@@ -76,7 +76,20 @@ class AnalyticsEngine:
         self._strategies: Dict[AnalysisType, AnalysisStrategy] = {}
         self._result_cache: Dict[str, tuple] = {}  # (result, timestamp)
         self._logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-        self._metrics = get_metrics_collector()
+        self._metrics_collector = get_metrics_collector()
+        # Create metrics for this engine
+        self._insufficient_data_counter = self._metrics_collector.counter(
+            "analytics_insufficient_data", 
+            "Count of times analysis was skipped due to insufficient data"
+        )
+        self._empty_window_counter = self._metrics_collector.counter(
+            "analytics_empty_window", 
+            "Count of times analysis found no issues in time window"
+        )
+        self._last_run_gauge = self._metrics_collector.gauge(
+            "analytics_last_run_count",
+            "Number of results from the last analytics run"
+        )
 
     def register_strategy(self, strategy: AnalysisStrategy) -> None:
         """Register an analysis strategy with the engine."""
@@ -125,7 +138,7 @@ class AnalyticsEngine:
                 f"Insufficient issues for analysis: {len(issues)} < {config.minimum_issues_for_analysis}",
                 repository=repository_name,
             )
-            self._metrics.increment_counter('analytics_insufficient_data')
+            self._insufficient_data_counter.inc()
             return {}
 
         # Create analysis context
@@ -142,7 +155,7 @@ class AnalyticsEngine:
                 repository=repository_name,
                 time_window_days=config.time_window_days,
             )
-            self._metrics.increment_counter('analytics_empty_window')
+            self._empty_window_counter.inc()
             return {}
 
         # Run enabled analyses
@@ -196,7 +209,7 @@ class AnalyticsEngine:
             analysis_count=len(results),
             correlation_id=correlation_id,
         )
-        self._metrics.set_gauge('analytics_last_run_count', len(results))
+        self._last_run_gauge.set(len(results))
         return results
 
     async def _run_strategy_analysis(

@@ -1,79 +1,64 @@
 """
-Infrastructure utilities for xSwE Agent.
-Provides retry, circuit breaker, metrics, and health check functionality.
+Infrastructure utilities for error handling, retry logic, and monitoring.
+
+This module provides robust infrastructure components for the xSwE Agent:
+- Retry mechanisms with exponential backoff
+- Circuit breaker patterns for external APIs
+- Health checks for system components
+- Metrics collection and monitoring
 """
 
-from .circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerPolicies,
-    CircuitBreakerPolicy,
-    CircuitState,
-    circuit_breaker,
-    get_circuit_breaker,
-)
-from .exceptions import (
-    AnalyticsException,
-    CircuitBreakerException,
-    ConfigurationException,
-    GeminiException,
-    GitHubAPIException,
-    RateLimitException,
-    XSWEException,
-)
+from .retry import retry, RetryPolicy, RetryConfig
+from .circuit_breaker import circuit_breaker, CircuitBreaker, CircuitState
 from .health_checks import (
-    CallableHealthCheck,
-    HealthCheck,
-    HealthCheckRegistry,
+    HealthChecker, 
+    HealthStatus, 
     HealthCheckResult,
-    HealthStatus,
-    get_health_registry,
-    register_health_check,
+    setup_default_health_checks,
+    get_health_checker,
 )
 from .metrics import (
-    MetricPoint,
-    MetricsCollector,
+    MetricsCollector, 
+    Counter, 
+    Histogram, 
+    Gauge,
     get_metrics_collector,
     track_api_calls,
+    track_execution_time,
 )
-from .retry import (
-    RetryPolicies,
-    RetryPolicy,
-    create_retry_decorator,
-    retry_with_policy,
+from .exceptions import (
+    XSWEException,
+    APIException,
+    GitHubAPIException,
+    GeminiAPIException,
+    RetryException,
+    CircuitBreakerException,
+    HealthCheckException,
+    ConfigurationException,
+    ValidationException,
 )
 
 __all__ = [
-    # Exceptions
-    "XSWEException",
-    "GitHubAPIException",
-    "RateLimitException",
-    "AnalyticsException",
-    "GeminiException",
-    "ConfigurationException",
-    "CircuitBreakerException",
-    # Retry
-    "RetryPolicy",
-    "RetryPolicies",
-    "retry_with_policy",
-    "create_retry_decorator",
-    # Circuit Breaker
-    "CircuitBreaker",
-    "CircuitBreakerPolicy",
-    "CircuitBreakerPolicies",
-    "CircuitState",
+    # Retry system
+    "retry",
+    "RetryPolicy", 
+    "RetryConfig",
+    # Circuit breaker
     "circuit_breaker",
-    "get_circuit_breaker",
+    "CircuitBreaker",
+    "CircuitState",
+    # Health checks
+    "HealthChecker",
+    "HealthStatus",
     # Metrics
     "MetricsCollector",
-    "MetricPoint",
-    "get_metrics_collector",
-    "track_api_calls",
-    # Health Checks
-    "HealthCheck",
-    "CallableHealthCheck",
-    "HealthCheckRegistry",
-    "HealthCheckResult",
-    "HealthStatus",
-    "get_health_registry",
-    "register_health_check",
+    "Counter",
+    "Histogram", 
+    "Gauge",
+    # Exceptions
+    "XSWEException",
+    "APIException",
+    "RetryException",
+    "CircuitBreakerException",
+    "HealthCheckException",
 ]
