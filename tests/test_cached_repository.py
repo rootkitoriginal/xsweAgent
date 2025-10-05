@@ -9,11 +9,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Import using proper package structure
-from src.github_monitor.repository import (
-    AwaitableList,
-    CachedGitHubRepository,
-    SearchCriteria,
-)
+from src.github_monitor.repository import (AwaitableList,
+                                           CachedGitHubRepository,
+                                           SearchCriteria)
 
 
 @pytest.fixture
