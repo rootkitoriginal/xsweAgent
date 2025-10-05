@@ -15,12 +15,6 @@ from src.github_monitor.repository import (
     SearchCriteria,
 )
 
-# Skip all tests in this module if CachedGitHubRepository is not implemented
-pytestmark = pytest.mark.skipif(
-    not hasattr(CachedGitHubRepository, "_cache"),
-    reason="CachedGitHubRepository implementation not available in this branch",
-)
-
 
 @pytest.fixture
 def cached_repo():
