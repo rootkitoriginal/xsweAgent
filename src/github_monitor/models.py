@@ -3,10 +3,10 @@ Data models for GitHub entities.
 Defines the structure of issues, pull requests, and other GitHub objects.
 """
 
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class IssueState(str, Enum):

@@ -4,15 +4,16 @@ Handles API endpoints for generating and retrieving charts.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
+
 from ...analytics.engine import AnalyticsEngine
-from ...github_monitor.service import GitHubIssuesService
 from ...charts.factory import ChartFactory
 from ...charts.generator import ChartGenerator
 from ...charts.models import ChartType
+from ...github_monitor.service import GitHubIssuesService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

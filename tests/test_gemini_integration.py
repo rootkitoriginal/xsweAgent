@@ -2,13 +2,14 @@
 Tests for the Gemini Integration module.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch
 import json
+from unittest.mock import AsyncMock, patch
 
-from src.gemini_integration.client import GeminiClient
+import pytest
+
 from src.gemini_integration.analyzer import CodeAnalyzer
-from src.gemini_integration.models import CodeSnippet, AnalysisStatus
+from src.gemini_integration.client import GeminiClient
+from src.gemini_integration.models import AnalysisStatus, CodeSnippet
 
 
 @pytest.fixture

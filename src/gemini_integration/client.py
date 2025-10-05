@@ -4,8 +4,9 @@ Handles low-level communication with the Google Gemini API.
 """
 
 import logging
+from typing import Any, Dict, Optional
+
 import google.generativeai as genai
-from typing import Optional, Dict, Any
 
 from ..config.settings import get_settings
 from .models import AnalysisStatus
@@ -101,14 +102,22 @@ class GeminiClient:
                 meta = response.usage_metadata
                 if isinstance(meta, dict):
                     usage_metadata = {
-                        "prompt_token_count": meta.get("prompt_token_count") or meta.get("promptTokenCount") or meta.get("prompt_token_count", None),
-                        "candidates_token_count": meta.get("candidates_token_count") or meta.get("candidatesTokenCount") or meta.get("candidates_token_count", None),
-                        "total_token_count": meta.get("total_token_count") or meta.get("totalTokenCount") or meta.get("total_token_count", None),
+                        "prompt_token_count": meta.get("prompt_token_count")
+                        or meta.get("promptTokenCount")
+                        or meta.get("prompt_token_count", None),
+                        "candidates_token_count": meta.get("candidates_token_count")
+                        or meta.get("candidatesTokenCount")
+                        or meta.get("candidates_token_count", None),
+                        "total_token_count": meta.get("total_token_count")
+                        or meta.get("totalTokenCount")
+                        or meta.get("total_token_count", None),
                     }
                 else:
                     usage_metadata = {
                         "prompt_token_count": getattr(meta, "prompt_token_count", None),
-                        "candidates_token_count": getattr(meta, "candidates_token_count", None),
+                        "candidates_token_count": getattr(
+                            meta, "candidates_token_count", None
+                        ),
                         "total_token_count": getattr(meta, "total_token_count", None),
                     }
 

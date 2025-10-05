@@ -3,19 +3,16 @@ GitHub Issues Service.
 High-level service for monitoring and analyzing GitHub issues.
 """
 
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..config import get_config
 from ..config.logging_config import get_logger
-from .repository import (
-    GitHubRepositoryInterface,
-    create_github_repository,
-    SearchCriteria,
-)
-from .models import Issue, IssueState, IssuePriority, IssueType
+from .models import Issue, IssuePriority, IssueState, IssueType
+from .repository import (GitHubRepositoryInterface, SearchCriteria,
+                         create_github_repository)
 
 
 @dataclass
@@ -430,7 +427,9 @@ class GitHubIssuesService:
                     else (
                         "good"
                         if health_score >= 60
-                        else "needs_attention" if health_score >= 40 else "critical"
+                        else "needs_attention"
+                        if health_score >= 40
+                        else "critical"
                     )
                 ),
                 "recommendations": [],

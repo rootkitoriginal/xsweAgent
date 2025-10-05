@@ -4,10 +4,11 @@ Handles API endpoints for running data analysis.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Dict
 
-from ...analytics.engine import AnalyticsEngine, AnalysisResult
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from ...analytics.engine import AnalysisResult, AnalyticsEngine
 from ...github_monitor.service import GitHubIssuesService
 
 logger = logging.getLogger(__name__)

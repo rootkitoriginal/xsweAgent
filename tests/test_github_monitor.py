@@ -89,9 +89,7 @@ async def test_github_issues_service_get_all_issues():
         service = GitHubIssuesService()
 
         # We need to mock the async call if the service method is async
-        service.get_all_issues = AsyncMock(
-            return_value=mock_get_issues.return_value
-        )
+        service.get_all_issues = AsyncMock(return_value=mock_get_issues.return_value)
 
         issues = await service.get_all_issues()
 
