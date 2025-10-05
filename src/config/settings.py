@@ -3,13 +3,14 @@ Configuration module for xSwE Agent.
 Handles application settings, environment variables, and configuration management.
 """
 
-from functools import lru_cache
-from typing import Optional, List
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings as PydanticBaseSettings
 import os
+from functools import lru_cache
 from pathlib import Path
+from typing import List, Optional
+
+from pydantic import Field, field_validator
 from pydantic_core import ValidationError as PydanticCoreValidationError
+from pydantic_settings import BaseSettings as PydanticBaseSettings
 
 
 class GitHubConfig(PydanticBaseSettings):
@@ -189,7 +190,11 @@ class AppConfig(PydanticBaseSettings):
             return GitHubConfig()
         except Exception:
             return GitHubConfig.model_construct(
-                token=None, repo=None, repo_owner="xLabInternet", repo_name="xRatEcosystem", rate_limit_per_hour=5000
+                token=None,
+                repo=None,
+                repo_owner="xLabInternet",
+                repo_name="xRatEcosystem",
+                rate_limit_per_hour=5000,
             )
 
     github: GitHubConfig = Field(default_factory=_default_github)

@@ -6,14 +6,13 @@ This module uses Matplotlib to create and save chart images.
 import io
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import pandas as pd
 
-from .models import ChartConfiguration, GeneratedChart, ChartStyling, ChartType
-
+from .models import ChartConfiguration, ChartStyling, ChartType, GeneratedChart
 
 logger = logging.getLogger(__name__)
 

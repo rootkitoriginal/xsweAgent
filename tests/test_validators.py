@@ -5,13 +5,8 @@ Tests for Pydantic field validators.
 import pytest
 from pydantic import ValidationError
 
-from src.config.settings import (
-    GitHubConfig,
-    GeminiConfig,
-    CacheConfig,
-    LoggingConfig,
-    SecurityConfig,
-)
+from src.config.settings import (CacheConfig, GeminiConfig, GitHubConfig,
+                                 LoggingConfig, SecurityConfig)
 
 
 class TestGitHubConfigValidator:

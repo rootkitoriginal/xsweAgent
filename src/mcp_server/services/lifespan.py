@@ -5,11 +5,12 @@ Handles application startup and shutdown events.
 
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-from src.github_monitor.service import GitHubIssuesService
 from src.analytics.engine import create_analytics_engine
 from src.config import get_config
+from src.github_monitor.service import GitHubIssuesService
 
 logger = logging.getLogger(__name__)
 
