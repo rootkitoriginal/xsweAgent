@@ -1,45 +1,52 @@
 """
-Custom exception classes for xSwE Agent infrastructure.
+Custom exceptions for xSwE Agent infrastructure.
 """
 
 
 class XSWEAgentError(Exception):
-    """Base exception for xSwE Agent errors."""
+    """Base exception for all xSwE Agent errors."""
+
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}
+
+
+# Alias for backwards compatibility
+XSWEBaseException = XSWEAgentError
+
+
+class RetryExhaustedError(XSWEAgentError):
+    """Raised when retry attempts are exhausted."""
 
     pass
 
 
-class AIServiceError(XSWEAgentError):
-    """Base exception for AI service errors."""
-
-    pass
-
-
-class RateLimitError(AIServiceError):
-    """Raised when API rate limit is exceeded."""
-
-    pass
-
-
-class RetryExhaustedError(AIServiceError):
-    """Raised when all retry attempts are exhausted."""
-
-    pass
-
-
-class CircuitBreakerOpenError(AIServiceError):
+class CircuitBreakerError(XSWEAgentError):
     """Raised when circuit breaker is open."""
 
     pass
 
 
-class ValidationError(XSWEAgentError):
-    """Raised when input/output validation fails."""
+class HealthCheckError(XSWEAgentError):
+    """Raised when health check fails."""
 
     pass
 
 
-class SafetyError(XSWEAgentError):
-    """Raised when safety checks fail."""
+class RateLimitError(XSWEAgentError):
+    """Raised when rate limit is exceeded."""
 
     pass
+
+
+class ChartGenerationError(XSWEAgentError):
+    """Raised when chart generation fails."""
+
+    pass
+
+
+# Legacy aliases for backward compatibility
+CircuitBreakerException = CircuitBreakerError
+HealthCheckException = HealthCheckError
+RetryException = RetryExhaustedError

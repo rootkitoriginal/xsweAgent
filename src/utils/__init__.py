@@ -1,32 +1,58 @@
 """
-Utility functions and infrastructure for xSwE Agent.
-Provides retry logic, circuit breakers, health checks, and metrics tracking.
+Utils Module
+Infrastructure components for retry logic, circuit breakers, health checks, and metrics.
 """
 
-from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies, CircuitState
+from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies
 from .exceptions import (
-    AIServiceError,
-    CircuitBreakerOpenError,
+    ChartGenerationError,
+    CircuitBreakerError,
+    HealthCheckError,
     RateLimitError,
     RetryExhaustedError,
+    XSWEAgentError,
+    XSWEBaseException,
 )
-from .health_checks import HealthCheck, HealthStatus
-from .metrics import MetricsTracker, track_api_calls
-from .retry import RetryPolicies, RetryPolicy, retry
+from .health_checks import (
+    BaseHealthCheck,
+    HealthCheck,
+    HealthChecker,
+    HealthCheckResult,
+    HealthStatus,
+    get_health_checker,
+    get_health_check_registry,
+)
+from .metrics import MetricsCollector, get_metrics_collector, track_api_calls, track_execution_time
+from .retry import BackoffStrategy, RetryPolicies, RetryPolicy, retry
 
 __all__ = [
+    # Retry
     "retry",
     "RetryPolicy",
     "RetryPolicies",
+    "BackoffStrategy",
+    # Circuit Breaker
     "CircuitBreaker",
     "CircuitBreakerPolicies",
-    "CircuitState",
+    # Health Checks
+    "BaseHealthCheck",
     "HealthCheck",
+    "HealthChecker",
+    "HealthCheckResult",
     "HealthStatus",
-    "MetricsTracker",
+    "get_health_checker",
+    "get_health_check_registry",
+    # Metrics
+    "MetricsCollector",
+    "get_metrics_collector",
     "track_api_calls",
-    "AIServiceError",
-    "RateLimitError",
+    "track_execution_time",
+    # Exceptions
+    "XSWEAgentError",
+    "XSWEBaseException",
     "RetryExhaustedError",
-    "CircuitBreakerOpenError",
+    "CircuitBreakerError",
+    "HealthCheckError",
+    "RateLimitError",
+    "ChartGenerationError",
 ]
