@@ -10,14 +10,32 @@ This module provides robust infrastructure components for the xSwE Agent:
 
 from .retry import retry, RetryPolicy, RetryConfig
 from .circuit_breaker import circuit_breaker, CircuitBreaker, CircuitState
-from .health_checks import HealthChecker, HealthStatus
-from .metrics import MetricsCollector, Counter, Histogram, Gauge
+from .health_checks import (
+    HealthChecker, 
+    HealthStatus, 
+    HealthCheckResult,
+    setup_default_health_checks,
+    get_health_checker,
+)
+from .metrics import (
+    MetricsCollector, 
+    Counter, 
+    Histogram, 
+    Gauge,
+    get_metrics_collector,
+    track_api_calls,
+    track_execution_time,
+)
 from .exceptions import (
     XSWEException,
     APIException,
+    GitHubAPIException,
+    GeminiAPIException,
     RetryException,
     CircuitBreakerException,
     HealthCheckException,
+    ConfigurationException,
+    ValidationException,
 )
 
 __all__ = [
