@@ -10,9 +10,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from ...config.logging_config import get_logger
-from ...gemini_integration import CodeAnalyzer, GeminiClient
 from ...github_monitor.service import GitHubIssuesService
 from ...utils import RetryPolicies, retry, track_api_calls
+
+# Optional imports for AI functionality
+try:
+    from ...gemini_integration import CodeAnalyzer, GeminiClient
+except ImportError:
+    CodeAnalyzer = None
+    GeminiClient = None
 
 logger = get_logger(__name__)
 router = APIRouter()

@@ -11,8 +11,14 @@ from .exceptions import (
     RetryExhaustedError,
     XSWEAgentError,
 )
-from .health_checks import HealthCheck, HealthCheckRegistry, HealthStatus
-from .metrics import MetricsCollector, track_api_calls
+from .health_checks import (
+    HealthCheck,
+    HealthCheckRegistry,
+    HealthCheckResult,
+    HealthStatus,
+    get_health_check_registry,
+)
+from .metrics import MetricsCollector, get_metrics_collector, track_api_calls
 from .retry import BackoffStrategy, RetryPolicies, RetryPolicy, retry
 
 __all__ = [
@@ -27,9 +33,12 @@ __all__ = [
     # Health Checks
     "HealthCheck",
     "HealthCheckRegistry",
+    "HealthCheckResult",
     "HealthStatus",
+    "get_health_check_registry",
     # Metrics
     "MetricsCollector",
+    "get_metrics_collector",
     "track_api_calls",
     # Exceptions
     "XSWEAgentError",

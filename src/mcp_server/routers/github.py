@@ -8,10 +8,12 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from ...config.logging_config import get_logger
 from ...github_monitor.models import Issue
 from ...github_monitor.service import GitHubIssuesService
+from ...utils import CircuitBreakerPolicies, RetryPolicies, circuit_breaker, retry, track_api_calls
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 router = APIRouter()
 
 
@@ -21,6 +23,8 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.get("/issues", response_model=List[Issue])
+@retry(RetryPolicies.GITHUB_API)
+@track_api_calls("github_issues")
 async def get_all_issues(service: GitHubIssuesService = Depends(get_github_service)):
     """
     Retrieve all issues from the configured GitHub repository.
@@ -29,7 +33,10 @@ async def get_all_issues(service: GitHubIssuesService = Depends(get_github_servi
         issues = await service.get_all_issues()
         if not issues:
             raise HTTPException(status_code=404, detail="No issues found.")
+        logger.info("Retrieved issues successfully", count=len(issues))
         return issues
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to retrieve GitHub issues: {e}", exc_info=True)
         raise HTTPException(
@@ -38,6 +45,8 @@ async def get_all_issues(service: GitHubIssuesService = Depends(get_github_servi
 
 
 @router.get("/issues/summary", response_model=dict)
+@retry(RetryPolicies.GITHUB_API)
+@track_api_calls("github_summary")
 async def get_issues_summary(
     service: GitHubIssuesService = Depends(get_github_service),
 ):
@@ -46,6 +55,7 @@ async def get_issues_summary(
     """
     try:
         summary = await service.get_issue_summary()
+        logger.info("Issues summary generated successfully")
         return summary
     except Exception as e:
         logger.error(f"Failed to get issues summary: {e}", exc_info=True)
