@@ -4,8 +4,8 @@ Defines data structures for chart data, configuration, and styling.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 class ChartType(Enum):

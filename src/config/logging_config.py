@@ -3,12 +3,11 @@ Logging configuration and setup for xSwE Agent.
 Provides structured logging with multiple output formats and levels.
 """
 
-import structlog
 import logging
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import structlog
 from loguru import logger

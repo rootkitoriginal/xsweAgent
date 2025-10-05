@@ -4,9 +4,9 @@ This file provides the minimum symbols tests import. It's intentionally
 very small so it can't contain duplicated fragments and will parse.
 """
 
-from typing import List, Optional, Dict, Any, Protocol, runtime_checkable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 
 @dataclass
@@ -26,13 +26,17 @@ class AwaitableList(list):
 
 @runtime_checkable
 class GitHubRepositoryInterface(Protocol):
-    def get_issues(self, criteria: Optional[SearchCriteria] = None) -> AwaitableList: ...
+    def get_issues(self, criteria: Optional[SearchCriteria] = None) -> AwaitableList:
+        ...
 
-    async def get_issue(self, issue_number: int): ...
+    async def get_issue(self, issue_number: int):
+        ...
 
-    async def get_repository_info(self): ...
+    async def get_repository_info(self):
+        ...
 
-    async def get_issue_timeline(self, issue_number: int): ...
+    async def get_issue_timeline(self, issue_number: int):
+        ...
 
 
 class GitHubRepository:
@@ -42,7 +46,7 @@ class GitHubRepository:
         repo_name: Optional[str] = None,
         token: Optional[str] = None,
         api_token: Optional[str] = None,
-        **_
+        **_,
     ):
         self.owner = owner
         self.repo_name = repo_name
@@ -75,7 +79,9 @@ class GitHubRepository:
         # Convert raw PyGithub issue-like objects to our Issue dataclass
         issues_list: List[Any] = []
         try:
-            from .models import Issue as IssueModel, IssueState, GitHubUser
+            from .models import GitHubUser
+            from .models import Issue as IssueModel
+            from .models import IssueState
 
             for r in raw_items or []:
                 # r may be a MagicMock in tests; safely access attributes

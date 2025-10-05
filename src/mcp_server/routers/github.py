@@ -4,8 +4,9 @@ Handles API endpoints related to GitHub data.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ...github_monitor.models import Issue
 from ...github_monitor.service import GitHubIssuesService

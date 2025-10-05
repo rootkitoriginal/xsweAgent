@@ -2,9 +2,10 @@
 Tests for the MCP Server (API endpoints).
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 # It's important to patch settings before importing the app
 from src.config import settings
@@ -12,8 +13,8 @@ from src.config import settings
 settings.get_settings.cache_clear()
 settings.SETTINGS_CACHE = None
 
-from src.mcp_server.main import app
-from src.github_monitor.models import Issue, IssueState
+from src.github_monitor.models import Issue, IssueState  # noqa: E402
+from src.mcp_server.main import app  # noqa: E402
 
 
 @pytest.fixture

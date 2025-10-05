@@ -2,12 +2,13 @@
 Tests for the Analytics Engine and Strategies.
 """
 
-import pytest
 from datetime import datetime, timedelta
 
+import pytest
+
 from src.analytics.engine import (
-    AnalyticsEngine,
     AnalyticsConfiguration,
+    AnalyticsEngine,
     create_analytics_engine,
 )
 from src.analytics.strategies import (

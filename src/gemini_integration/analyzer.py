@@ -3,13 +3,13 @@ Gemini Code Analyzer
 Uses the Gemini client to perform high-level code analysis tasks.
 """
 
-import logging
 import json
-from typing import Optional, List
+import logging
 import uuid
+from typing import List, Optional
 
 from .client import GeminiClient
-from .models import CodeSnippet, AnalysisResult, CodeReport, Suggestion, AnalysisStatus
+from .models import AnalysisResult, AnalysisStatus, CodeReport, CodeSnippet, Suggestion
 
 logger = logging.getLogger(__name__)
 

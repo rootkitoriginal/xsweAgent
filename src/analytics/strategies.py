@@ -3,15 +3,15 @@ Analytics Strategy Pattern implementation.
 Provides different types of analysis strategies for GitHub issues data.
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from enum import Enum
 import statistics
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..config.logging_config import get_logger
-from ..github_monitor.models import Issue, IssueState, IssuePriority, IssueType
+from ..github_monitor.models import Issue, IssuePriority, IssueState, IssueType
 
 
 class AnalysisType(str, Enum):
@@ -48,6 +48,7 @@ class AnalysisResult:
     metrics: Optional[Dict[str, Any]] = None
     details: Optional[Dict[str, Any]] = None
     context: Optional[Any] = None
+
     def __post_init__(self):
         # Backwards-compat: many callers/tests expect `metrics` and `details`
         # to be available as top-level attributes. Map them from `data` if
@@ -130,7 +131,8 @@ class ProductivityAnalysisStrategy(AnalysisStrategy):
             period_issues = [
                 issue
                 for issue in issues
-                if issue.created_at and issue.created_at.replace(tzinfo=None) >= cutoff_date
+                if issue.created_at
+                and issue.created_at.replace(tzinfo=None) >= cutoff_date
             ]
 
         closed_issues = [issue for issue in period_issues if issue.is_closed]
@@ -181,7 +183,9 @@ class ProductivityAnalysisStrategy(AnalysisStrategy):
             "throughput_ratio": (
                 round(daily_closure / daily_creation, 2) if daily_creation > 0 else 0
             ),
-            "avg_resolution_time_days": round((avg_cycle_time / 24), 2) if avg_cycle_time else None,
+            "avg_resolution_time_days": round((avg_cycle_time / 24), 2)
+            if avg_cycle_time
+            else None,
         }
 
         # Generate summary and recommendations
@@ -212,9 +216,6 @@ class ProductivityAnalysisStrategy(AnalysisStrategy):
             },
             score=round(velocity, 2) if velocity is not None else None,
         )
-        
-
-
 
 
 class VelocityAnalysisStrategy(AnalysisStrategy):

@@ -4,13 +4,14 @@ Initializes the FastAPI application, middleware, and routers.
 """
 
 import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from ..config import get_config
 from ..config.logging_config import setup_logging
-from .routers import github, analytics, charts
+from .routers import analytics, charts, github
 from .services.lifespan import lifespan
 
 # Setup logging

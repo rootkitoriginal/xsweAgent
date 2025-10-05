@@ -4,24 +4,22 @@ Provides comprehensive GitHub repository monitoring and analytics.
 """
 
 from .models import (
-    Issue,
-    IssueState,
-    IssuePriority,
-    IssueType,
     GitHubUser,
+    Issue,
+    IssuePriority,
+    IssueState,
+    IssueType,
     Label,
     Milestone,
-    Repository,
     PullRequest,
+    Repository,
 )
-
 from .repository import (
-    GitHubRepository,
     CachedGitHubRepository,
+    GitHubRepository,
     SearchCriteria,
     create_github_repository,
 )
-
 from .service import GitHubIssuesService, IssueMetrics, ProductivityMetrics
 
 __all__ = [

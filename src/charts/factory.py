@@ -5,11 +5,10 @@ This module acts as a factory for generating ChartData objects.
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from ..analytics.strategies import AnalysisResult, AnalysisType
 from .models import ChartConfiguration, ChartData, ChartType
-
 
 logger = logging.getLogger(__name__)
 

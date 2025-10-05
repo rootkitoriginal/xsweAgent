@@ -3,13 +3,14 @@ Tests for the configuration system.
 """
 
 import os
+
 import pytest
 from pydantic import ValidationError
 
 from src.config.settings import (
     AppConfig,
-    GitHubConfig,
     GeminiConfig,
+    GitHubConfig,
     MCPServerConfig,
     get_settings,
 )

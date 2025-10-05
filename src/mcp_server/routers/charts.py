@@ -4,15 +4,16 @@ Handles API endpoints for generating and retrieving charts.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
+
 from ...analytics.engine import AnalyticsEngine
-from ...github_monitor.service import GitHubIssuesService
 from ...charts.factory import ChartFactory
 from ...charts.generator import ChartGenerator
 from ...charts.models import ChartType
+from ...github_monitor.service import GitHubIssuesService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -79,7 +80,7 @@ async def generate_chart_for_analysis(
 
     except ValueError:
         raise HTTPException(
-            status_code=400, detail=f"Invalid chart type or analysis type provided."
+            status_code=400, detail="Invalid chart type or analysis type provided."
         )
     except Exception as e:
         logger.error(f"Failed to generate chart: {e}", exc_info=True)

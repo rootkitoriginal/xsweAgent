@@ -4,14 +4,14 @@ Provides comprehensive data analysis capabilities for GitHub issues.
 """
 
 from .strategies import (
-    AnalysisStrategy,
     AnalysisResult,
+    AnalysisStrategy,
     AnalysisType,
-    ProductivityAnalysisStrategy,
-    VelocityAnalysisStrategy,
-    BurndownAnalysisStrategy,
-    QualityAnalysisStrategy,
     AnalyticsEngine,
+    BurndownAnalysisStrategy,
+    ProductivityAnalysisStrategy,
+    QualityAnalysisStrategy,
+    VelocityAnalysisStrategy,
 )
 
 __all__ = [
