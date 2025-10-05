@@ -5,6 +5,7 @@ Infrastructure components for retry logic, circuit breakers, health checks, and 
 
 from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies
 from .exceptions import (
+    ChartGenerationError,
     CircuitBreakerError,
     HealthCheckError,
     RateLimitError,
@@ -46,4 +47,5 @@ __all__ = [
     "CircuitBreakerError",
     "HealthCheckError",
     "RateLimitError",
+    "ChartGenerationError",
 ]

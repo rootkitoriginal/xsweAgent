@@ -31,3 +31,9 @@ class RateLimitError(XSWEAgentError):
     """Raised when rate limit is exceeded."""
 
     pass
+
+
+class ChartGenerationError(XSWEAgentError):
+    """Raised when chart generation fails."""
+
+    pass
