@@ -6,15 +6,23 @@ Sistema Python para monitoramento de issues do GitHub com análise inteligente v
 
 - **Monitoramento de Issues**: Monitora automaticamente o repositório xLabInternet/xRatEcosystem
 - **Analytics Avançada**: Gera gráficos de tarefas concluídas vs abertas, tempo médio de implementação
+- **Chart Generation System**: Sistema completo de visualização com múltiplos backends (Matplotlib + Plotly)
+  - 10+ tipos de gráficos (BAR, LINE, PIE, TIME_SERIES, HEATMAP, etc.)
+  - Exportação em múltiplos formatos (PNG, SVG, PDF, HTML)
+  - Backend interativo com Plotly para visualizações web
+  - Infraestrutura de retry, circuit breaker e métricas
 - **Análise de Código IA**: Integração com Gemini 2.5 Flash para análise inteligente de código
 - **Servidor MCP**: Exposição de funcionalidades via Model Context Protocol
 - **Dashboard Web**: Interface visual para acompanhamento das métricas
+- **Infrastructure Utilities**: Retry logic, circuit breakers, health checks, performance metrics
 
 ## 🏗️ Arquitetura
 
 O projeto utiliza os design patterns:
 - **Repository Pattern**: Para abstração do acesso a dados do GitHub
 - **Strategy Pattern**: Para diferentes tipos de análises e visualizações
+- **Factory Pattern**: Para criação de gráficos com múltiplos backends
+- **Circuit Breaker Pattern**: Para proteção contra falhas em cascata
 - **Observer Pattern**: Para notificações de mudanças nas issues
 
 ## 📁 Estrutura do Projeto
@@ -24,12 +32,15 @@ xsweAgent/
 ├── src/
 │   ├── github_monitor/          # Módulo de monitoramento GitHub
 │   ├── analytics/               # Engine de análise de dados
-│   ├── charts/                  # Gerador de gráficos
+│   ├── charts/                  # Gerador de gráficos (Matplotlib + Plotly)
 │   ├── gemini_integration/      # Integração com Gemini AI
 │   ├── mcp_server/              # Servidor MCP
+│   ├── utils/                   # Infraestrutura (retry, metrics, health checks)
 │   └── config/                  # Sistema de configuração
 ├── tests/                       # Testes unitários
 ├── docs/                        # Documentação
+│   └── CHART_GENERATION.md      # Documentação do sistema de gráficos
+├── examples/                    # Exemplos de uso
 ├── requirements.txt             # Dependências Python
 ├── docker-compose.yml           # Setup Docker
 ├── .env.example                 # Variáveis de ambiente
