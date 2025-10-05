@@ -359,10 +359,12 @@ class BurndownAnalysisStrategy(AnalysisStrategy):
         return AnalysisType.BURNDOWN
 
     async def analyze(
-        self, issues: List[Issue], milestone: Optional[str] = None, **kwargs
+        self, issues: List[Issue], context_or_unused=None, **kwargs
     ) -> AnalysisResult:
         """Analyze burndown for a specific milestone."""
-        self.logger.info(f"Analyzing burndown for milestone: {milestone}")
+        # For burndown, we can work with all issues if no milestone specified
+        milestone = kwargs.get('milestone', None)
+        self.logger.info(f"Analyzing burndown for milestone: {context_or_unused}")
 
         # Filter issues by milestone
         if milestone:
