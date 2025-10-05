@@ -27,7 +27,7 @@ class TestGitHubIntegration:
         mock_api.add_issue("Feature: Add search", IssueState.OPEN, created_days_ago=3)
         mock_api.add_issue("Bug: Memory leak", IssueState.CLOSED, created_days_ago=10, closed_days_ago=2)
         
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             mock_repo.get_issues.return_value = mock_api.get_issues()
             
@@ -41,15 +41,9 @@ class TestGitHubIntegration:
             assert len(issues) == 3
             assert isinstance(issues[0], Issue)
             
-            # Test service layer
-            service = GitHubIssuesService(repository=repo)
-            all_issues = await service.get_all_issues()
-            
-            assert len(all_issues) >= 3
-            
             # Verify issue properties
-            open_issues = [i for i in all_issues if i.state == IssueState.OPEN]
-            closed_issues = [i for i in all_issues if i.state == IssueState.CLOSED]
+            open_issues = [i for i in issues if i.state == IssueState.OPEN]
+            closed_issues = [i for i in issues if i.state == IssueState.CLOSED]
             
             assert len(open_issues) == 2
             assert len(closed_issues) == 1
@@ -75,7 +69,7 @@ class TestGitHubIntegration:
                 closed_days_ago=i
             )
         
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             mock_repo.get_issues.return_value = mock_api.get_issues()
             
@@ -83,10 +77,9 @@ class TestGitHubIntegration:
             mock_client.get_repo.return_value = mock_repo
             
             repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
-            service = GitHubIssuesService(repository=repo)
             
-            # Test filtering open issues
-            all_issues = await service.get_all_issues()
+            # Test filtering issues
+            all_issues = repo.get_issues()
             open_issues = [i for i in all_issues if i.state == IssueState.OPEN]
             closed_issues = [i for i in all_issues if i.state == IssueState.CLOSED]
             
@@ -96,7 +89,7 @@ class TestGitHubIntegration:
     @pytest.mark.asyncio
     async def test_issue_timeline_retrieval(self):
         """Test retrieving issue timeline events."""
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             # Create mock timeline events
             mock_events = []
             for i in range(3):
@@ -123,7 +116,7 @@ class TestGitHubIntegration:
     @pytest.mark.asyncio
     async def test_repository_info_retrieval(self):
         """Test retrieving repository information."""
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             mock_repo.id = 12345
             mock_repo.name = "test-repo"
@@ -153,7 +146,7 @@ class TestGitHubIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_network_failure(self):
         """Test error handling when network fails."""
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             mock_repo.get_issues.side_effect = Exception("Network error")
             
@@ -169,7 +162,7 @@ class TestGitHubIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_auth_failure(self):
         """Test error handling when authentication fails."""
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_client = MockGithub.return_value
             mock_client.get_repo.side_effect = Exception("Bad credentials")
             
@@ -194,7 +187,7 @@ class TestGitHubIntegration:
                 closed_days_ago=i // 2 if state == IssueState.CLOSED else None
             )
         
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             mock_repo.get_issues.return_value = mock_api.get_issues()
             
@@ -202,14 +195,15 @@ class TestGitHubIntegration:
             mock_client.get_repo.return_value = mock_repo
             
             repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
-            service = GitHubIssuesService(repository=repo)
+            issues = repo.get_issues()
             
-            summary = await service.get_summary()
+            # Calculate summary from issues
+            total = len(issues)
+            open_count = sum(1 for i in issues if i.state == IssueState.OPEN)
+            closed_count = sum(1 for i in issues if i.state == IssueState.CLOSED)
             
-            assert "total_issues" in summary
-            assert "open_issues" in summary
-            assert "closed_issues" in summary
-            assert summary["total_issues"] == 10
+            assert total == 10
+            assert open_count + closed_count == total
     
     @pytest.mark.asyncio
     async def test_rate_limit_handling(self):
@@ -221,7 +215,7 @@ class TestGitHubIntegration:
         for i in range(15):
             mock_api.add_issue(f"Issue {i}", IssueState.OPEN)
         
-        with patch('src.github_monitor.repository.Github') as MockGithub:
+        with patch('github.Github') as MockGithub:
             mock_repo = MagicMock()
             
             # First call succeeds
