@@ -10,12 +10,24 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 
 from ...analytics.engine import AnalyticsEngine
-from ...charts.factory import ChartFactory
-from ...charts.generator import ChartGenerator
-from ...charts.models import ChartType
+from ...config.logging_config import get_logger
 from ...github_monitor.service import GitHubIssuesService
+from ...utils import RetryPolicies, retry, track_api_calls
 
-logger = logging.getLogger(__name__)
+# Optional imports for charts functionality
+try:
+    from ...charts.factory import ChartFactory
+    from ...charts.generator import ChartGenerator
+    from ...charts.models import ChartType
+
+    CHARTS_AVAILABLE = True
+except ImportError:
+    ChartFactory = None
+    ChartGenerator = None
+    ChartType = None
+    CHARTS_AVAILABLE = False
+
+logger = get_logger(__name__)
 router = APIRouter()
 
 
@@ -29,6 +41,8 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.get("/generate/{analysis_type}", response_class=Response)
+@retry(RetryPolicies.STANDARD)
+@track_api_calls("chart_generation")
 async def generate_chart_for_analysis(
     analysis_type: str,
     chart_type: Optional[str] = None,
@@ -42,6 +56,12 @@ async def generate_chart_for_analysis(
         analysis_type: The name of the analysis (e.g., 'productivity', 'velocity').
         chart_type: Optional specific chart type (e.g., 'bar', 'pie').
     """
+    if not CHARTS_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Charts functionality not available. Install matplotlib and plotly.",
+        )
+
     try:
         # 1. Get data
         issues = await github_service.get_all_issues()
@@ -75,6 +95,12 @@ async def generate_chart_for_analysis(
         generator = ChartGenerator(chart_data.config)
         generated_chart = generator.generate()
 
+        logger.info(
+            "Chart generated successfully",
+            analysis_type=analysis_type,
+            chart_type=chart_type,
+        )
+
         # 5. Return image as response
         return Response(content=generated_chart.image_data, media_type="image/png")
 
@@ -82,6 +108,8 @@ async def generate_chart_for_analysis(
         raise HTTPException(
             status_code=400, detail="Invalid chart type or analysis type provided."
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to generate chart: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate chart: {e}")
