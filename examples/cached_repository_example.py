@@ -11,8 +11,7 @@ This example demonstrates:
 import asyncio
 import time
 
-from src.github_monitor.repository import (CachedGitHubRepository,
-                                           SearchCriteria)
+from src.github_monitor.repository import CachedGitHubRepository, SearchCriteria
 
 
 def example_basic_caching():

@@ -349,9 +349,12 @@ async def create_analytics_engine(
     Returns:
         Configured AnalyticsEngine instance
     """
-    from .strategies import (BurndownAnalysisStrategy,
-                             ProductivityAnalysisStrategy,
-                             QualityAnalysisStrategy, VelocityAnalysisStrategy)
+    from .strategies import (
+        BurndownAnalysisStrategy,
+        ProductivityAnalysisStrategy,
+        QualityAnalysisStrategy,
+        VelocityAnalysisStrategy,
+    )
 
     engine = AnalyticsEngine(configuration)
 
