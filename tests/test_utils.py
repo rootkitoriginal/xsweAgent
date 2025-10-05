@@ -44,7 +44,7 @@ class TestRetry:
         """Test successful execution without retry."""
         call_count = 0
 
-        @retry(RetryPolicies.QUICK)
+        @retry(RetryPolicies.FAST)
         def successful_function():
             nonlocal call_count
             call_count += 1
@@ -58,7 +58,7 @@ class TestRetry:
         """Test retry after failures."""
         call_count = 0
 
-        @retry(RetryPolicies.QUICK)
+        @retry(RetryPolicies.FAST)
         def failing_then_success():
             nonlocal call_count
             call_count += 1
