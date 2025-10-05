@@ -5,14 +5,16 @@ Manages multiple analysis strategies and provides consolidated insights.
 
 import asyncio
 import logging
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Type
 
+from ..config.logging_config import get_logger
 from ..github_monitor.models import Issue, IssueState
 from .strategies import AnalysisResult, AnalysisStrategy, AnalysisType
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -72,7 +74,7 @@ class AnalyticsEngine:
         self.config = configuration or AnalyticsConfiguration()
         self._strategies: Dict[AnalysisType, AnalysisStrategy] = {}
         self._result_cache: Dict[str, tuple] = {}  # (result, timestamp)
-        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self._logger = get_logger(f"{__name__}.{self.__class__.__name__}")
 
     def register_strategy(self, strategy: AnalysisStrategy) -> None:
         """Register an analysis strategy with the engine."""
@@ -108,12 +110,17 @@ class AnalyticsEngine:
         Returns:
             Dictionary mapping analysis type names to results
         """
+        # Generate correlation ID for this analysis run
+        correlation_id = str(uuid.uuid4())
+        self._logger = self._logger.bind(correlation_id=correlation_id)
+        
         config = custom_config or self.config
 
         # Validate input data
         if len(issues) < config.minimum_issues_for_analysis:
             self._logger.warning(
-                f"Insufficient issues for analysis: {len(issues)} < {config.minimum_issues_for_analysis}"
+                f"Insufficient issues for analysis: {len(issues)} < {config.minimum_issues_for_analysis}",
+                repository=repository_name,
             )
             return {}
 
@@ -126,7 +133,11 @@ class AnalyticsEngine:
         )
 
         if not filtered_issues:
-            self._logger.warning("No issues found in specified time window")
+            self._logger.warning(
+                "No issues found in specified time window",
+                repository=repository_name,
+                time_window_days=config.time_window_days,
+            )
             return {}
 
         # Run enabled analyses
@@ -174,7 +185,12 @@ class AnalyticsEngine:
                     cache_key = self._get_cache_key(analysis_type, context)
                     self._result_cache[cache_key] = (result, datetime.now())
 
-        self._logger.info(f"Completed analysis with {len(results)} successful results")
+        self._logger.info(
+            f"Completed analysis with {len(results)} successful results",
+            repository=repository_name,
+            analysis_count=len(results),
+            correlation_id=correlation_id,
+        )
         return results
 
     async def _run_strategy_analysis(
