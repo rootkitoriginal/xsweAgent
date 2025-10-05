@@ -10,6 +10,7 @@ from fastapi.responses import PlainTextResponse, Response
 
 from ...config.logging_config import get_logger
 from ...utils import get_metrics_collector
+from ...utils.metrics import Counter
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -50,23 +51,21 @@ async def get_metrics_summary():
     try:
         collector = get_metrics_collector()
         metrics = collector.get_all_metrics()
-        counters = collector.get_counters()
+        stats = collector.get_stats()
 
         metrics_data = {}
         for name, metric in metrics.items():
-            metrics_data[name] = {
-                "count": metric.count,
-                "total": round(metric.total, 2),
-                "min": round(metric.min, 2),
-                "max": round(metric.max, 2),
-                "avg": round(metric.avg, 2),
-            }
+            if hasattr(metric, 'get_value'):
+                value = metric.get_value()
+                if isinstance(value, dict):
+                    metrics_data[name] = value
+                else:
+                    metrics_data[name] = {"value": value}
 
         return {
             "metrics": metrics_data,
-            "counters": counters,
+            "stats": stats,
             "total_metrics": len(metrics),
-            "total_counters": len(counters),
         }
     except Exception as e:
         logger.error(f"Failed to get metrics summary: {e}", exc_info=True)
@@ -91,17 +90,21 @@ async def get_performance_metrics():
         performance_metrics = {}
         for name, metric in metrics.items():
             if "duration" in name or "time" in name or "latency" in name:
-                performance_metrics[name] = {
-                    "avg_ms": round(metric.avg, 2),
-                    "min_ms": round(metric.min, 2),
-                    "max_ms": round(metric.max, 2),
-                    "count": metric.count,
-                }
+                if hasattr(metric, 'get_value'):
+                    value = metric.get_value()
+                    if isinstance(value, dict):
+                        performance_metrics[name] = value
+                    else:
+                        performance_metrics[name] = {"value": value}
 
-        # Get API call counters
-        counters = collector.get_counters()
+        # Get counter metrics  
+        counter_metrics = {}
+        for name, metric in metrics.items():
+            if isinstance(metric, Counter):
+                counter_metrics[name] = metric.get_value()
+        
         api_calls = {
-            k: v for k, v in counters.items() if "calls_total" in k
+            k: v for k, v in counter_metrics.items() if "calls_total" in k
         }
 
         return {
@@ -152,13 +155,14 @@ async def get_metrics_health():
     try:
         collector = get_metrics_collector()
         metrics = collector.get_all_metrics()
-        counters = collector.get_counters()
+        stats = collector.get_stats()
 
         return {
             "status": "healthy",
             "metrics_count": len(metrics),
-            "counters_count": len(counters),
+            "counters_count": stats.get("metrics_by_type", {}).get("counter", 0),
             "collection_active": True,
+            "stats": stats,
         }
     except Exception as e:
         logger.error(f"Metrics health check failed: {e}", exc_info=True)

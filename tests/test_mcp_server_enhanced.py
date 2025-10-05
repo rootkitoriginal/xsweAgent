@@ -98,7 +98,7 @@ class TestMetricsRouter:
 
         data = response.json()
         assert "metrics" in data
-        assert "counters" in data
+        assert "stats" in data  # Updated to match new API
 
     def test_metrics_performance_endpoint(self, client):
         """Test the /api/v1/metrics/performance endpoint."""

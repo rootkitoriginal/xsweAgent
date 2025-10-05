@@ -507,6 +507,10 @@ class HealthChecker:
             del self.checks[name]
             logger.info(f"Unregistered health check: {name}")
     
+    def list_checks(self) -> list:
+        """List all registered health check names."""
+        return list(self.checks.keys())
+    
     async def check_single(self, name: str) -> Optional[HealthCheckResult]:
         """Run a single health check by name."""
         check = self.checks.get(name)
