@@ -84,7 +84,8 @@ async def test_github_issues_service_get_all_issues():
             ),
         ]
 
-        # GitHubIssuesService expects an optional repository parameter; instantiate without repo_name/api_token
+        # GitHubIssuesService expects an optional repository parameter
+        # instantiate without repo_name/api_token
         service = GitHubIssuesService()
 
         # We need to mock the async call if the service method is async
@@ -126,7 +127,8 @@ async def test_github_issues_service_get_summary():
             ),
         ]
 
-        # GitHubIssuesService expects an optional repository parameter; instantiate without repo_name/api_token
+        # GitHubIssuesService expects an optional repository parameter
+        # instantiate without repo_name/api_token
         service = GitHubIssuesService()
 
         # Mock the async call
@@ -147,3 +149,190 @@ async def test_github_issues_service_get_summary():
         assert summary["open_issues"] == 2
         assert summary["closed_issues"] == 1
         assert summary["total_issues"] == 3
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_issue(MockGithub):
+    """Test fetching a single issue from the GitHub repository."""
+    # Create mock issue
+    mock_issue = MagicMock()
+    mock_issue.number = 42
+    mock_issue.title = "Test Single Issue"
+    mock_issue.body = "This is a test issue body"
+    mock_issue.state = "open"
+    mock_issue.created_at = "2023-01-01T12:00:00Z"
+    mock_issue.updated_at = "2023-01-02T12:00:00Z"
+    mock_issue.closed_at = None
+    mock_issue.comments = 5
+    mock_issue.html_url = "https://github.com/test/repo/issues/42"
+    mock_issue.user.login = "testuser"
+    mock_issue.user.id = 123
+    mock_issue.assignee.login = "assigneduser"
+    mock_issue.assignee.id = 456
+
+    # Setup mock repository
+    mock_repo = MagicMock()
+    mock_repo.get_issue.return_value = mock_issue
+
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.return_value = mock_repo
+
+    repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
+    issue = await repo.get_issue(42)
+
+    assert issue is not None
+    assert isinstance(issue, Issue)
+    assert issue.number == 42
+    assert issue.title == "Test Single Issue"
+    assert issue.body == "This is a test issue body"
+    assert issue.state == IssueState.OPEN
+    assert issue.comments == 5
+    assert issue.html_url == "https://github.com/test/repo/issues/42"
+    assert issue.user.login == "testuser"
+    assert issue.assignee.login == "assigneduser"
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_issue_not_found(MockGithub):
+    """Test fetching a non-existent issue returns None."""
+    # Setup mock to raise exception
+    mock_repo = MagicMock()
+    mock_repo.get_issue.side_effect = Exception("Issue not found")
+
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.return_value = mock_repo
+
+    repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
+    issue = await repo.get_issue(999)
+
+    assert issue is None
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_repository_info(MockGithub):
+    """Test fetching repository information."""
+    from src.github_monitor.models import Repository
+
+    # Create mock repository
+    mock_repo = MagicMock()
+    mock_repo.id = 12345
+    mock_repo.name = "test-repo"
+    mock_repo.full_name = "test/test-repo"
+    mock_repo.description = "A test repository"
+    mock_repo.private = False
+    mock_repo.html_url = "https://github.com/test/test-repo"
+    mock_repo.created_at = "2023-01-01T00:00:00Z"
+    mock_repo.updated_at = "2023-06-01T00:00:00Z"
+    mock_repo.pushed_at = "2023-06-15T00:00:00Z"
+    mock_repo.open_issues_count = 10
+    mock_repo.forks_count = 5
+    mock_repo.stargazers_count = 50
+    mock_repo.watchers_count = 25
+
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.return_value = mock_repo
+
+    repo_obj = GitHubRepository(repo_name="test/test-repo", api_token="fake_token")
+    repo_info = await repo_obj.get_repository_info()
+
+    assert repo_info is not None
+    assert isinstance(repo_info, Repository)
+    assert repo_info.id == 12345
+    assert repo_info.name == "test-repo"
+    assert repo_info.full_name == "test/test-repo"
+    assert repo_info.description == "A test repository"
+    assert repo_info.private is False
+    assert repo_info.html_url == "https://github.com/test/test-repo"
+    assert repo_info.open_issues_count == 10
+    assert repo_info.forks_count == 5
+    assert repo_info.stargazers_count == 50
+    assert repo_info.watchers_count == 25
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_repository_info_error(MockGithub):
+    """Test fetching repository info with error returns None."""
+    # Setup mock to raise exception
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.side_effect = Exception("Repository not found")
+
+    repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
+    repo_info = await repo.get_repository_info()
+
+    assert repo_info is None
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_issue_timeline(MockGithub):
+    """Test fetching issue timeline events."""
+    # Create mock timeline events
+    event1 = MagicMock()
+    event1.event = "labeled"
+    event1.created_at = "2023-01-01T12:00:00Z"
+    event1.actor.login = "user1"
+    event1.label.name = "bug"
+
+    event2 = MagicMock()
+    event2.event = "assigned"
+    event2.created_at = "2023-01-02T12:00:00Z"
+    event2.actor.login = "user2"
+    event2.assignee.login = "assignee1"
+
+    event3 = MagicMock()
+    event3.event = "closed"
+    event3.created_at = "2023-01-03T12:00:00Z"
+    event3.actor.login = "user1"
+
+    # Create mock issue
+    mock_issue = MagicMock()
+    mock_issue.get_timeline.return_value = [event1, event2, event3]
+
+    # Setup mock repository
+    mock_repo = MagicMock()
+    mock_repo.get_issue.return_value = mock_issue
+
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.return_value = mock_repo
+
+    repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
+    timeline = await repo.get_issue_timeline(42)
+
+    assert timeline is not None
+    assert isinstance(timeline, list)
+    assert len(timeline) == 3
+
+    # Check first event (labeled)
+    assert timeline[0]["event"] == "labeled"
+    assert timeline[0]["actor"] == "user1"
+    assert timeline[0]["label"] == "bug"
+
+    # Check second event (assigned)
+    assert timeline[1]["event"] == "assigned"
+    assert timeline[1]["actor"] == "user2"
+    assert timeline[1]["assignee"] == "assignee1"
+
+    # Check third event (closed)
+    assert timeline[2]["event"] == "closed"
+    assert timeline[2]["actor"] == "user1"
+
+
+@pytest.mark.asyncio
+@patch("github.Github")
+async def test_github_repository_get_issue_timeline_error(MockGithub):
+    """Test fetching issue timeline with error returns empty list."""
+    # Setup mock to raise exception
+    mock_repo = MagicMock()
+    mock_repo.get_issue.side_effect = Exception("Issue not found")
+
+    mock_instance = MockGithub.return_value
+    mock_instance.get_repo.return_value = mock_repo
+
+    repo = GitHubRepository(repo_name="test/repo", api_token="fake_token")
+    timeline = await repo.get_issue_timeline(999)
+
+    assert timeline == []
