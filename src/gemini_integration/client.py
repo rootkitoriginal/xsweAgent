@@ -12,13 +12,9 @@ import google.generativeai as genai
 
 from ..config.logging_config import get_logger
 from ..config.settings import get_settings
-from ..utils import (
-    CircuitBreakerPolicies,
-    RetryPolicies,
-    circuit_breaker,
-    retry,
-    track_api_calls,
-)
+from ..utils.circuit_breaker import CircuitBreakerPolicies, circuit_breaker
+from ..utils.metrics import track_api_calls
+from ..utils.retry import RetryPolicies, retry
 from .models import AIAnalysisRequest, AIAnalysisResult, AIConfig, AnalysisStatus
 
 logger = logging.getLogger(__name__)

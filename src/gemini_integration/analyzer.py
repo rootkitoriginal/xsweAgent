@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from ..config.logging_config import get_logger
 from ..github_monitor.models import Issue
-from ..utils import retry, track_api_calls, RetryPolicies
+from ..utils.metrics import track_api_calls
+from ..utils.retry import RetryPolicies, retry
 from .client import GeminiClient
 from .models import (
     AnalysisResult,
@@ -32,32 +33,7 @@ logger = logging.getLogger(__name__)
 xswe_logger = get_logger("gemini_analyzer")
 
 
-class GeminiAnalyzer:
-    """
-    Enhanced AI-powered analyzer with multiple analysis capabilities.
-    
-    Provides:
-    - Code analysis with quality and security insights
-    - Issue intelligence and categorization
-    - Trend prediction and forecasting
-    - Sentiment analysis
-    - Priority recommendations
-    - Collaboration insights
-    """
-
-    def __init__(self, client: Optional[GeminiClient] = None):
-        """
-        Initialize the enhanced analyzer.
-
-        Args:
-            client: GeminiClient instance. If not provided, creates a new one.
-        """
-        self.client = client or GeminiClient()
-        xswe_logger.info("Initialized GeminiAnalyzer with enhanced capabilities")
-
-
-# Keep backward compatibility
-class CodeAnalyzer(GeminiAnalyzer):
+class CodeAnalyzer:
     """
     Analyzes code snippets using the Gemini AI model.
     Constructs prompts, parses responses, and formats results.
@@ -655,3 +631,28 @@ class CodeAnalyzer(GeminiAnalyzer):
         except (json.JSONDecodeError, TypeError) as e:
             xswe_logger.error(f"Failed to parse collaboration insights: {e}")
             return None
+
+
+# GeminiAnalyzer extends CodeAnalyzer for backward compatibility
+# and provides all enhanced AI analysis capabilities
+class GeminiAnalyzer(CodeAnalyzer):
+    """
+    Enhanced AI-powered analyzer with multiple analysis capabilities.
+    
+    Provides all CodeAnalyzer functionality plus:
+    - Issue intelligence and categorization
+    - Trend prediction and forecasting
+    - Sentiment analysis
+    - Priority recommendations
+    - Collaboration insights
+    """
+
+    def __init__(self, client: Optional[GeminiClient] = None):
+        """
+        Initialize the enhanced analyzer.
+
+        Args:
+            client: GeminiClient instance. If not provided, creates a new one.
+        """
+        super().__init__(client)
+        xswe_logger.info("Initialized GeminiAnalyzer with enhanced capabilities")
