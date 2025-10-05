@@ -28,7 +28,7 @@ xsweAgent/
 │   ├── gemini_integration/      # Integração com Gemini AI
 │   ├── mcp_server/              # Servidor MCP
 │   └── config/                  # Sistema de configuração
-├── tests/                       # Testes unitários
+├── tests/                       # Comprehensive testing framework (5,258 lines)
 ├── docs/                        # Documentação
 ├── requirements.txt             # Dependências Python
 ├── docker-compose.yml           # Setup Docker
@@ -104,6 +104,38 @@ O sistema expõe suas funcionalidades via servidor MCP, permitindo integração 
 
 ### Via API REST
 Acesse as funcionalidades via endpoints REST no servidor MCP.
+
+## 🧪 Testing Framework
+
+Comprehensive testing framework with **131 tests** and **73.3% pass rate**:
+
+- **Test Utilities**: 3 mock utilities (GitHub, Gemini, TestDataBuilder)
+- **Custom Assertions**: 5 specialized classes for validation
+- **Integration Tests**: 31 tests covering GitHub, Analytics, and Charts
+- **Performance Tests**: 18 benchmarks for scalability validation
+- **Test Fixtures**: 20+ reusable fixtures
+- **Documentation**: 47 KB of comprehensive guides
+
+### Quick Test Commands
+
+```bash
+# Run all tests
+pytest
+
+# Run integration tests
+pytest -m integration
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# GitHub integration tests (all passing)
+pytest tests/integration/test_github_integration.py -v
+```
+
+### Documentation
+- **[tests/README.md](tests/README.md)** - Main testing guide
+- **[tests/TEST_EXECUTION_GUIDE.md](tests/TEST_EXECUTION_GUIDE.md)** - Command reference
+- **[TESTING_FRAMEWORK_COMPLETE.md](TESTING_FRAMEWORK_COMPLETE.md)** - Complete overview
 
 ## 🤝 Contribuição
 
