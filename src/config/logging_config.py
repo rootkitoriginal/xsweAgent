@@ -282,3 +282,51 @@ def setup_logging() -> LoggerSetup:
     if _logger_setup is None:
         _logger_setup = LoggerSetup()
     return _logger_setup
+
+
+def with_correlation(func):
+    """
+    Decorator to add correlation ID to log context.
+    
+    Example:
+        @with_correlation
+        async def process_request():
+            logger.info("Processing request")  # Will include correlation_id
+    """
+    import functools
+    import uuid
+    
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        correlation_id = str(uuid.uuid4())
+        bound_logger = logger.bind(correlation_id=correlation_id)
+        
+        # Store in context for nested calls
+        import contextvars
+        _correlation_id = contextvars.ContextVar('correlation_id', default=None)
+        token = _correlation_id.set(correlation_id)
+        
+        try:
+            return await func(*args, **kwargs)
+        finally:
+            _correlation_id.reset(token)
+    
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        correlation_id = str(uuid.uuid4())
+        bound_logger = logger.bind(correlation_id=correlation_id)
+        
+        import contextvars
+        _correlation_id = contextvars.ContextVar('correlation_id', default=None)
+        token = _correlation_id.set(correlation_id)
+        
+        try:
+            return func(*args, **kwargs)
+        finally:
+            _correlation_id.reset(token)
+    
+    import asyncio
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
