@@ -1,13 +1,15 @@
 """
-Health check utilities for monitoring service health.
-Provides components for tracking and reporting system health status.
+Health check system for monitoring component availability.
 """
 
+import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional
+
+from .exceptions import HealthCheckError
 
 logger = logging.getLogger(__name__)
 
@@ -21,141 +23,165 @@ class HealthStatus(Enum):
 
 
 @dataclass
-class ServiceHealth:
-    """Health information for a service or component."""
+class HealthCheckResult:
+    """Result of a health check."""
 
-    name: str
+    component: str
     status: HealthStatus
     message: str = ""
-    last_check: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "name": self.name,
-            "status": self.status.value,
-            "message": self.message,
-            "last_check": self.last_check.isoformat(),
-            "metadata": self.metadata,
-        }
+    details: Dict = field(default_factory=dict)
+    timestamp: float = field(default_factory=time.time)
+    duration_ms: float = 0.0
 
 
 class HealthCheck:
     """
-    Health check manager for monitoring multiple services.
+    Health check for a system component.
 
     Example:
-        health = HealthCheck()
-        health.register("database", lambda: check_db_connection())
-        health.register("cache", lambda: check_redis())
-        status = health.check_all()
+        async def check_database():
+            await db.ping()
+            return HealthCheckResult(
+                component="database",
+                status=HealthStatus.HEALTHY,
+                message="Database connection OK"
+            )
+
+        health_check = HealthCheck("database", check_database)
+        result = await health_check.execute()
+    """
+
+    def __init__(
+        self,
+        name: str,
+        check_func: Callable,
+        timeout: float = 5.0,
+        critical: bool = True,
+    ):
+        self.name = name
+        self.check_func = check_func
+        self.timeout = timeout
+        self.critical = critical
+
+    async def execute(self) -> HealthCheckResult:
+        """Execute the health check."""
+        start_time = time.time()
+
+        try:
+            if asyncio.iscoroutinefunction(self.check_func):
+                result = await asyncio.wait_for(
+                    self.check_func(), timeout=self.timeout
+                )
+            else:
+                result = self.check_func()
+
+            if isinstance(result, HealthCheckResult):
+                result.duration_ms = (time.time() - start_time) * 1000
+                return result
+            else:
+                # If check returns True/None, consider it healthy
+                return HealthCheckResult(
+                    component=self.name,
+                    status=HealthStatus.HEALTHY,
+                    message=f"{self.name} is healthy",
+                    duration_ms=(time.time() - start_time) * 1000,
+                )
+
+        except asyncio.TimeoutError:
+            logger.error(f"Health check timeout for {self.name}")
+            return HealthCheckResult(
+                component=self.name,
+                status=HealthStatus.UNHEALTHY,
+                message=f"Health check timed out after {self.timeout}s",
+                duration_ms=(time.time() - start_time) * 1000,
+            )
+        except Exception as e:
+            logger.error(f"Health check failed for {self.name}: {e}")
+            return HealthCheckResult(
+                component=self.name,
+                status=HealthStatus.UNHEALTHY,
+                message=f"Health check failed: {str(e)}",
+                duration_ms=(time.time() - start_time) * 1000,
+            )
+
+
+class HealthCheckRegistry:
+    """
+    Registry for managing multiple health checks.
+
+    Example:
+        registry = HealthCheckRegistry()
+        registry.register(HealthCheck("db", check_db))
+        registry.register(HealthCheck("cache", check_cache))
+
+        results = await registry.check_all()
     """
 
     def __init__(self):
-        self._checks: Dict[str, Callable[[], bool]] = {}
-        self._results: Dict[str, ServiceHealth] = {}
+        self._checks: Dict[str, HealthCheck] = {}
 
-    def register(self, name: str, check_func: Callable[[], bool]):
-        """
-        Register a health check function.
+    def register(self, check: HealthCheck):
+        """Register a health check."""
+        self._checks[check.name] = check
+        logger.info(f"Registered health check: {check.name}")
 
-        Args:
-            name: Service name
-            check_func: Function that returns True if healthy, False otherwise
-        """
-        self._checks[name] = check_func
-        logger.debug(f"Registered health check for {name}")
+    def unregister(self, name: str):
+        """Unregister a health check."""
+        if name in self._checks:
+            del self._checks[name]
+            logger.info(f"Unregistered health check: {name}")
 
-    def check(self, name: str) -> ServiceHealth:
-        """
-        Execute health check for a specific service.
-
-        Args:
-            name: Service name
-
-        Returns:
-            ServiceHealth object with check results
-        """
+    async def check(self, name: str) -> HealthCheckResult:
+        """Execute a specific health check."""
         if name not in self._checks:
-            return ServiceHealth(
-                name=name,
-                status=HealthStatus.UNHEALTHY,
-                message=f"No health check registered for {name}",
-            )
+            raise HealthCheckError(f"Health check not found: {name}")
 
-        try:
-            is_healthy = self._checks[name]()
-            status = HealthStatus.HEALTHY if is_healthy else HealthStatus.UNHEALTHY
-            message = "Service is operational" if is_healthy else "Service check failed"
+        return await self._checks[name].execute()
 
-            result = ServiceHealth(
-                name=name,
-                status=status,
-                message=message,
-                last_check=datetime.now(),
-            )
-            self._results[name] = result
-            return result
-
-        except Exception as e:
-            logger.error(f"Health check failed for {name}: {e}")
-            result = ServiceHealth(
-                name=name,
-                status=HealthStatus.UNHEALTHY,
-                message=f"Health check error: {str(e)}",
-                last_check=datetime.now(),
-            )
-            self._results[name] = result
-            return result
-
-    def check_all(self) -> Dict[str, ServiceHealth]:
-        """
-        Execute all registered health checks.
-
-        Returns:
-            Dictionary of service names to health status
-        """
+    async def check_all(self) -> Dict[str, HealthCheckResult]:
+        """Execute all registered health checks."""
         results = {}
-        for name in self._checks.keys():
-            results[name] = self.check(name)
+
+        for name, check in self._checks.items():
+            results[name] = await check.execute()
+
         return results
 
-    def get_overall_status(self) -> HealthStatus:
-        """
-        Get overall system health status.
+    async def get_overall_status(self) -> HealthStatus:
+        """Get overall system health status."""
+        results = await self.check_all()
 
-        Returns:
-            HEALTHY if all services healthy, UNHEALTHY if any unhealthy,
-            DEGRADED if some are unhealthy but system is operational
-        """
-        if not self._results:
-            self.check_all()
-
-        statuses = [result.status for result in self._results.values()]
-
-        if all(s == HealthStatus.HEALTHY for s in statuses):
+        if not results:
             return HealthStatus.HEALTHY
-        elif any(s == HealthStatus.UNHEALTHY for s in statuses):
-            # Consider system degraded if less than half are unhealthy
-            unhealthy_count = sum(1 for s in statuses if s == HealthStatus.UNHEALTHY)
-            if unhealthy_count < len(statuses) / 2:
-                return HealthStatus.DEGRADED
+
+        # Check critical components
+        has_critical_failure = False
+        has_degraded = False
+
+        for name, result in results.items():
+            check = self._checks[name]
+
+            if result.status == HealthStatus.UNHEALTHY and check.critical:
+                has_critical_failure = True
+            elif result.status in (HealthStatus.UNHEALTHY, HealthStatus.DEGRADED):
+                has_degraded = True
+
+        if has_critical_failure:
             return HealthStatus.UNHEALTHY
-        else:
+        elif has_degraded:
             return HealthStatus.DEGRADED
+        else:
+            return HealthStatus.HEALTHY
 
-    def get_summary(self) -> Dict[str, Any]:
-        """
-        Get health check summary.
+    def list_checks(self) -> List[str]:
+        """List all registered health checks."""
+        return list(self._checks.keys())
 
-        Returns:
-            Dictionary with overall status and individual service results
-        """
-        return {
-            "overall_status": self.get_overall_status().value,
-            "services": {
-                name: result.to_dict() for name, result in self._results.items()
-            },
-            "timestamp": datetime.now().isoformat(),
-        }
+
+# Global registry instance
+_registry = HealthCheckRegistry()
+
+
+def get_health_check_registry() -> HealthCheckRegistry:
+    """Get the global health check registry."""
+    return _registry

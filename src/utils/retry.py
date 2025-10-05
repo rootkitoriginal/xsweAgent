@@ -1,201 +1,190 @@
 """
-Retry and Circuit Breaker utilities.
-Provides decorators for handling transient failures and service protection.
+Retry logic with configurable backoff strategies.
 """
 
-import functools
+import asyncio
 import logging
-import time
-from typing import Any, Callable, Optional, Type, Union
+import random
+from dataclasses import dataclass
+from enum import Enum
+from functools import wraps
+from typing import Callable, Optional, Type, Union
 
-from tenacity import (
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-    retry as tenacity_retry,
-)
-
-from .exceptions import CircuitBreakerError, RetryExhaustedError
+from .exceptions import RetryExhaustedError
 
 logger = logging.getLogger(__name__)
+
+
+class BackoffStrategy(Enum):
+    """Backoff strategies for retry logic."""
+
+    LINEAR = "linear"
+    EXPONENTIAL = "exponential"
+    LINEAR_JITTER = "linear_jitter"
+    EXPONENTIAL_JITTER = "exponential_jitter"
+
+
+@dataclass
+class RetryPolicy:
+    """Configuration for retry behavior."""
+
+    max_attempts: int = 3
+    base_delay: float = 1.0
+    max_delay: float = 60.0
+    backoff_strategy: BackoffStrategy = BackoffStrategy.EXPONENTIAL
+    exceptions: tuple = (Exception,)
 
 
 class RetryPolicies:
     """Pre-configured retry policies for common scenarios."""
 
-    # Default policy: 3 attempts with exponential backoff
-    DEFAULT = {
-        "stop": stop_after_attempt(3),
-        "wait": wait_exponential(multiplier=1, min=1, max=10),
-        "reraise": True,
-    }
+    # Fast retry for quick operations
+    FAST = RetryPolicy(
+        max_attempts=2,
+        base_delay=0.5,
+        max_delay=5.0,
+        backoff_strategy=BackoffStrategy.LINEAR_JITTER,
+    )
 
-    # Aggressive policy: 5 attempts with longer waits
-    AGGRESSIVE = {
-        "stop": stop_after_attempt(5),
-        "wait": wait_exponential(multiplier=2, min=2, max=30),
-        "reraise": True,
-    }
+    # Standard retry for most operations
+    STANDARD = RetryPolicy(
+        max_attempts=3,
+        base_delay=1.0,
+        max_delay=30.0,
+        backoff_strategy=BackoffStrategy.EXPONENTIAL_JITTER,
+    )
 
-    # Quick policy: 2 attempts with minimal wait
-    QUICK = {
-        "stop": stop_after_attempt(2),
-        "wait": wait_exponential(multiplier=1, min=1, max=5),
-        "reraise": True,
-    }
+    # Aggressive retry for critical operations
+    AGGRESSIVE = RetryPolicy(
+        max_attempts=5,
+        base_delay=2.0,
+        max_delay=60.0,
+        backoff_strategy=BackoffStrategy.EXPONENTIAL_JITTER,
+    )
 
-    # API policy: optimized for external API calls
-    API = {
-        "stop": stop_after_attempt(3),
-        "wait": wait_exponential(multiplier=2, min=2, max=20),
-        "reraise": True,
-    }
+    # MCP-specific retry policy
+    MCP_TOOLS = RetryPolicy(
+        max_attempts=2,
+        base_delay=1.0,
+        max_delay=10.0,
+        backoff_strategy=BackoffStrategy.LINEAR_JITTER,
+    )
+
+    # GitHub API retry policy
+    GITHUB_API = RetryPolicy(
+        max_attempts=3,
+        base_delay=2.0,
+        max_delay=30.0,
+        backoff_strategy=BackoffStrategy.EXPONENTIAL_JITTER,
+    )
+
+    # AI/Gemini API retry policy
+    AI_API = RetryPolicy(
+        max_attempts=3,
+        base_delay=1.0,
+        max_delay=20.0,
+        backoff_strategy=BackoffStrategy.EXPONENTIAL_JITTER,
+    )
+
+
+def calculate_delay(
+    attempt: int, policy: RetryPolicy, jitter: bool = False
+) -> float:
+    """Calculate delay for next retry attempt."""
+    if policy.backoff_strategy in (
+        BackoffStrategy.LINEAR,
+        BackoffStrategy.LINEAR_JITTER,
+    ):
+        delay = policy.base_delay * attempt
+    else:  # EXPONENTIAL
+        delay = policy.base_delay * (2 ** (attempt - 1))
+
+    delay = min(delay, policy.max_delay)
+
+    if jitter or "jitter" in policy.backoff_strategy.value:
+        # Add jitter: ±25% of the delay
+        jitter_amount = delay * 0.25
+        delay = delay + random.uniform(-jitter_amount, jitter_amount)
+        delay = max(0, delay)  # Ensure non-negative
+
+    return delay
 
 
 def retry(
-    policy: dict = None,
-    exceptions: tuple = (Exception,),
-    on_retry: Optional[Callable] = None,
+    policy: Union[RetryPolicy, Type[RetryPolicy]] = RetryPolicies.STANDARD
 ):
     """
-    Retry decorator with configurable policy.
+    Decorator for retrying functions with configurable backoff.
 
     Args:
-        policy: Retry policy configuration (uses DEFAULT if not provided)
-        exceptions: Tuple of exception types to retry on
-        on_retry: Optional callback function called on each retry
+        policy: RetryPolicy instance or class defining retry behavior
 
     Example:
-        @retry(RetryPolicies.DEFAULT)
+        @retry(RetryPolicies.STANDARD)
         async def fetch_data():
             return await api_call()
     """
-    if policy is None:
-        policy = RetryPolicies.DEFAULT
 
-    def decorator(func):
-        @functools.wraps(func)
-        @tenacity_retry(
-            retry=retry_if_exception_type(exceptions),
-            **policy,
-        )
+    def decorator(func: Callable):
+        @wraps(func)
         async def async_wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except exceptions as e:
-                if on_retry:
-                    on_retry(e)
-                logger.warning(
-                    f"Retrying {func.__name__} due to {type(e).__name__}: {str(e)}"
-                )
-                raise
+            last_exception = None
 
-        @functools.wraps(func)
-        @tenacity_retry(
-            retry=retry_if_exception_type(exceptions),
-            **policy,
-        )
+            for attempt in range(1, policy.max_attempts + 1):
+                try:
+                    return await func(*args, **kwargs)
+                except policy.exceptions as e:
+                    last_exception = e
+                    if attempt >= policy.max_attempts:
+                        logger.error(
+                            f"Retry exhausted for {func.__name__} after {attempt} attempts: {e}"
+                        )
+                        raise RetryExhaustedError(
+                            f"Failed after {policy.max_attempts} attempts"
+                        ) from e
+
+                    delay = calculate_delay(attempt, policy)
+                    logger.warning(
+                        f"Attempt {attempt}/{policy.max_attempts} failed for {func.__name__}: {e}. "
+                        f"Retrying in {delay:.2f}s..."
+                    )
+                    await asyncio.sleep(delay)
+
+            if last_exception:
+                raise last_exception
+
+        @wraps(func)
         def sync_wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                if on_retry:
-                    on_retry(e)
-                logger.warning(
-                    f"Retrying {func.__name__} due to {type(e).__name__}: {str(e)}"
-                )
-                raise
+            last_exception = None
 
-        # Return appropriate wrapper based on function type
-        import asyncio
-        import inspect
+            for attempt in range(1, policy.max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except policy.exceptions as e:
+                    last_exception = e
+                    if attempt >= policy.max_attempts:
+                        logger.error(
+                            f"Retry exhausted for {func.__name__} after {attempt} attempts: {e}"
+                        )
+                        raise RetryExhaustedError(
+                            f"Failed after {policy.max_attempts} attempts"
+                        ) from e
+
+                    delay = calculate_delay(attempt, policy)
+                    logger.warning(
+                        f"Attempt {attempt}/{policy.max_attempts} failed for {func.__name__}: {e}. "
+                        f"Retrying in {delay:.2f}s..."
+                    )
+                    import time
+
+                    time.sleep(delay)
+
+            if last_exception:
+                raise last_exception
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper
-
-    return decorator
-
-
-class CircuitBreaker:
-    """
-    Circuit breaker implementation for service protection.
-
-    Prevents cascading failures by temporarily blocking calls to failing services.
-    """
-
-    def __init__(
-        self,
-        failure_threshold: int = 5,
-        timeout: int = 60,
-        expected_exception: Type[Exception] = Exception,
-    ):
-        self.failure_threshold = failure_threshold
-        self.timeout = timeout
-        self.expected_exception = expected_exception
-        self.failure_count = 0
-        self.last_failure_time = None
-        self.state = "closed"  # closed, open, half-open
-
-    def call(self, func: Callable, *args, **kwargs) -> Any:
-        """Execute function with circuit breaker protection."""
-        if self.state == "open":
-            if time.time() - self.last_failure_time >= self.timeout:
-                self.state = "half-open"
-                logger.info(f"Circuit breaker for {func.__name__} entering half-open state")
-            else:
-                raise CircuitBreakerError(
-                    f"Circuit breaker is open for {func.__name__}",
-                    details={"failure_count": self.failure_count},
-                )
-
-        try:
-            result = func(*args, **kwargs)
-            if self.state == "half-open":
-                self.state = "closed"
-                self.failure_count = 0
-                logger.info(f"Circuit breaker for {func.__name__} closed")
-            return result
-        except self.expected_exception as e:
-            self.failure_count += 1
-            self.last_failure_time = time.time()
-
-            if self.failure_count >= self.failure_threshold:
-                self.state = "open"
-                logger.error(
-                    f"Circuit breaker opened for {func.__name__} "
-                    f"after {self.failure_count} failures"
-                )
-
-            raise
-
-
-def circuit_breaker(
-    failure_threshold: int = 5,
-    timeout: int = 60,
-    expected_exception: Type[Exception] = Exception,
-):
-    """
-    Circuit breaker decorator.
-
-    Args:
-        failure_threshold: Number of failures before opening circuit
-        timeout: Seconds to wait before attempting to close circuit
-        expected_exception: Exception type that triggers the circuit breaker
-
-    Example:
-        @circuit_breaker(failure_threshold=3, timeout=30)
-        def external_api_call():
-            return requests.get(url)
-    """
-    breaker = CircuitBreaker(failure_threshold, timeout, expected_exception)
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            return breaker.call(func, *args, **kwargs)
-
-        return wrapper
 
     return decorator

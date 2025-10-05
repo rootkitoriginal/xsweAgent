@@ -1,33 +1,49 @@
 """
-Utilities Module - Infrastructure components for error handling, retry logic, and monitoring.
-Provides reusable components for robust service operations.
+Utils Module
+Infrastructure components for retry logic, circuit breakers, health checks, and metrics.
 """
 
+from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies
 from .exceptions import (
-    ChartGenerationError,
     CircuitBreakerError,
+    HealthCheckError,
+    RateLimitError,
     RetryExhaustedError,
-    XSWEBaseException,
+    XSWEAgentError,
 )
-from .health_checks import HealthCheck, HealthStatus, ServiceHealth
-from .metrics import MetricsCollector, track_execution_time
-from .retry import RetryPolicies, circuit_breaker, retry
+from .health_checks import (
+    HealthCheck,
+    HealthCheckRegistry,
+    HealthCheckResult,
+    HealthStatus,
+    get_health_check_registry,
+)
+from .metrics import MetricsCollector, get_metrics_collector, track_api_calls
+from .retry import BackoffStrategy, RetryPolicies, RetryPolicy, retry
 
 __all__ = [
-    # Exceptions
-    "XSWEBaseException",
-    "RetryExhaustedError",
-    "CircuitBreakerError",
-    "ChartGenerationError",
-    # Retry & Circuit Breaker
+    # Retry
     "retry",
-    "circuit_breaker",
+    "RetryPolicy",
     "RetryPolicies",
+    "BackoffStrategy",
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerPolicies",
     # Health Checks
     "HealthCheck",
+    "HealthCheckRegistry",
+    "HealthCheckResult",
     "HealthStatus",
-    "ServiceHealth",
+    "get_health_check_registry",
     # Metrics
     "MetricsCollector",
-    "track_execution_time",
+    "get_metrics_collector",
+    "track_api_calls",
+    # Exceptions
+    "XSWEAgentError",
+    "RetryExhaustedError",
+    "CircuitBreakerError",
+    "HealthCheckError",
+    "RateLimitError",
 ]
