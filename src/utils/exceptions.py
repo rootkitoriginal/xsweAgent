@@ -1,10 +1,9 @@
 """
-Custom exceptions for xSwE Agent.
-Provides structured error handling across the application.
+Custom exceptions for xSwE Agent infrastructure.
 """
 
 
-class XSWEBaseException(Exception):
+class XSWEAgentError(Exception):
     """Base exception for all xSwE Agent errors."""
 
     def __init__(self, message: str, details: dict = None):
@@ -13,31 +12,41 @@ class XSWEBaseException(Exception):
         self.details = details or {}
 
 
-class RetryExhaustedError(XSWEBaseException):
+# Alias for backwards compatibility
+XSWEBaseException = XSWEAgentError
+
+
+class RetryExhaustedError(XSWEAgentError):
     """Raised when retry attempts are exhausted."""
 
     pass
 
 
-class CircuitBreakerError(XSWEBaseException):
+class CircuitBreakerError(XSWEAgentError):
     """Raised when circuit breaker is open."""
 
     pass
 
 
-class ChartGenerationError(XSWEBaseException):
+class HealthCheckError(XSWEAgentError):
+    """Raised when health check fails."""
+
+    pass
+
+
+class RateLimitError(XSWEAgentError):
+    """Raised when rate limit is exceeded."""
+
+    pass
+
+
+class ChartGenerationError(XSWEAgentError):
     """Raised when chart generation fails."""
 
     pass
 
 
-class APIError(XSWEBaseException):
-    """Raised when external API calls fail."""
-
-    pass
-
-
-class ConfigurationError(XSWEBaseException):
-    """Raised when configuration is invalid."""
-
-    pass
+# Legacy aliases for backward compatibility
+CircuitBreakerException = CircuitBreakerError
+HealthCheckException = HealthCheckError
+RetryException = RetryExhaustedError

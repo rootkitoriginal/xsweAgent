@@ -61,7 +61,7 @@ class ChartGenerator:
             self._fig = None
             self._plotly_fig = None
 
-    @retry(RetryPolicies.QUICK)
+    @retry(RetryPolicies.FAST)
     @track_execution_time('chart_generation')
     def generate(self, export_options: Optional[ExportOptions] = None) -> Union[GeneratedChart, ChartResult]:
         """

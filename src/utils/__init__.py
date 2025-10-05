@@ -1,33 +1,58 @@
 """
-Utilities Module - Infrastructure components for error handling, retry logic, and monitoring.
-Provides reusable components for robust service operations.
+Utils Module
+Infrastructure components for retry logic, circuit breakers, health checks, and metrics.
 """
 
+from .circuit_breaker import CircuitBreaker, CircuitBreakerPolicies
 from .exceptions import (
     ChartGenerationError,
     CircuitBreakerError,
+    HealthCheckError,
+    RateLimitError,
     RetryExhaustedError,
+    XSWEAgentError,
     XSWEBaseException,
 )
-from .health_checks import HealthCheck, HealthStatus, ServiceHealth
-from .metrics import MetricsCollector, track_execution_time
-from .retry import RetryPolicies, circuit_breaker, retry
+from .health_checks import (
+    BaseHealthCheck,
+    HealthCheck,
+    HealthChecker,
+    HealthCheckResult,
+    HealthStatus,
+    get_health_checker,
+    get_health_check_registry,
+)
+from .metrics import MetricsCollector, get_metrics_collector, track_api_calls, track_execution_time
+from .retry import BackoffStrategy, RetryPolicies, RetryPolicy, retry
 
 __all__ = [
+    # Retry
+    "retry",
+    "RetryPolicy",
+    "RetryPolicies",
+    "BackoffStrategy",
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerPolicies",
+    # Health Checks
+    "BaseHealthCheck",
+    "HealthCheck",
+    "HealthChecker",
+    "HealthCheckResult",
+    "HealthStatus",
+    "get_health_checker",
+    "get_health_check_registry",
+    # Metrics
+    "MetricsCollector",
+    "get_metrics_collector",
+    "track_api_calls",
+    "track_execution_time",
     # Exceptions
+    "XSWEAgentError",
     "XSWEBaseException",
     "RetryExhaustedError",
     "CircuitBreakerError",
+    "HealthCheckError",
+    "RateLimitError",
     "ChartGenerationError",
-    # Retry & Circuit Breaker
-    "retry",
-    "circuit_breaker",
-    "RetryPolicies",
-    # Health Checks
-    "HealthCheck",
-    "HealthStatus",
-    "ServiceHealth",
-    # Metrics
-    "MetricsCollector",
-    "track_execution_time",
 ]

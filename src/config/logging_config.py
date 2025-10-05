@@ -1,13 +1,21 @@
 """
-Logging configuration and setup for xSwE Agent.
-Provides structured logging with multiple output formats and levels.
+Enhanced logging configuration and setup for xSwE Agent.
+Provides structured logging with correlation IDs, request tracking,
+and comprehensive error context for robust monitoring and debugging.
 """
 
+import asyncio
+import json
 import logging
 import sys
+import traceback
+import uuid
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from threading import local
+from typing import Any, Dict, Optional, Union
 
 import structlog
 from loguru import logger
@@ -16,9 +24,78 @@ from loguru import logger
 # get_config for legacy callers and get_settings for newer code.
 from . import get_config
 
+# Context variables for correlation tracking
+correlation_id: ContextVar[Optional[str]] = ContextVar('correlation_id', default=None)
+request_id: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
+user_id: ContextVar[Optional[str]] = ContextVar('user_id', default=None)
 
-class LoggerSetup:
-    """Centralized logging setup and configuration."""
+# Thread-local storage for sync contexts
+_thread_local = local()
+
+
+class CorrelatedFormatter(logging.Formatter):
+    """Custom formatter that includes correlation context."""
+    
+    def format(self, record: logging.LogRecord) -> str:
+        # Add correlation context to record
+        record.correlation_id = get_correlation_id()
+        record.request_id = get_request_id()
+        record.user_id = get_user_id()
+        
+        # Add performance context if available
+        if hasattr(record, 'duration'):
+            record.performance = {'duration': record.duration}
+        
+        return super().format(record)
+
+
+class StructuredJsonFormatter(logging.Formatter):
+    """JSON formatter with structured fields for production logging."""
+    
+    def format(self, record: logging.LogRecord) -> str:
+        log_entry = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno,
+        }
+        
+        # Add correlation context
+        if correlation_id := get_correlation_id():
+            log_entry['correlation_id'] = correlation_id
+        if request_id := get_request_id():
+            log_entry['request_id'] = request_id
+        if user_id := get_user_id():
+            log_entry['user_id'] = user_id
+        
+        # Add exception information
+        if record.exc_info:
+            log_entry['exception'] = {
+                'type': record.exc_info[0].__name__,
+                'message': str(record.exc_info[1]),
+                'traceback': traceback.format_exception(*record.exc_info),
+            }
+        
+        # Add extra fields from the record
+        for key, value in record.__dict__.items():
+            if key not in ['name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
+                          'filename', 'module', 'lineno', 'funcName', 'created',
+                          'msecs', 'relativeCreated', 'thread', 'threadName',
+                          'processName', 'process', 'getMessage', 'exc_info',
+                          'exc_text', 'stack_info', 'correlation_id', 'request_id',
+                          'user_id']:
+                if not key.startswith('_'):
+                    log_entry['extra'] = log_entry.get('extra', {})
+                    log_entry['extra'][key] = value
+        
+        return json.dumps(log_entry, default=str, ensure_ascii=False)
+
+
+class EnhancedLoggerSetup:
+    """Enhanced centralized logging setup with correlation and structured output."""
 
     def __init__(self):
         try:
@@ -34,10 +111,45 @@ class LoggerSetup:
             fallback = SimpleNamespace(debug=False, logging=fallback_logging)
             self.config = fallback
 
-        # Proceed to initialize logging subsystems; they will use the
-        # fallback config when real settings are not yet available.
+        # Setup enhanced logging
+        self._setup_python_logging()
         self._setup_structlog()
         self._setup_loguru()
+        
+    def _setup_python_logging(self):
+        """Configure Python standard logging with enhanced formatters."""
+        # Clear any existing handlers
+        root = logging.getLogger()
+        root.handlers.clear()
+        
+        # Set log level
+        log_level = getattr(logging, getattr(self.config.logging, 'level', 'INFO').upper())
+        root.setLevel(log_level)
+        
+        # Console handler with appropriate formatter
+        console_handler = logging.StreamHandler(sys.stdout)
+        
+        # Choose formatter based on environment
+        if getattr(self.config, 'debug', False) or getattr(self.config.logging, 'format', 'simple') == 'simple':
+            # Development/debug mode - human readable
+            formatter = CorrelatedFormatter(
+                '%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | '
+                '[%(correlation_id)s] %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+        else:
+            # Production mode - structured JSON
+            formatter = StructuredJsonFormatter()
+        
+        console_handler.setFormatter(formatter)
+        root.addHandler(console_handler)
+        
+        # File handler if configured
+        if hasattr(self.config.logging, 'file') and self.config.logging.file:
+            file_handler = logging.FileHandler(self.config.logging.file)
+            file_handler.setFormatter(StructuredJsonFormatter())  # Always JSON for files
+            root.addHandler(file_handler)
+
 
     def _setup_structlog(self):
         """Configure structlog for structured logging."""
@@ -268,11 +380,116 @@ def get_security_logger() -> SecurityLogger:
     return SecurityLogger()
 
 
-# Initialize logging on module import
-_logger_setup = LoggerSetup()
+# Correlation ID utilities
+def generate_correlation_id() -> str:
+    """Generate a new correlation ID."""
+    return str(uuid.uuid4())
 
 
-def setup_logging() -> LoggerSetup:
+def set_correlation_id(correlation_id_value: str) -> None:
+    """Set the correlation ID for the current context."""
+    correlation_id.set(correlation_id_value)
+    
+    # Also set in thread local for sync contexts
+    _thread_local.correlation_id = correlation_id_value
+
+
+def get_correlation_id() -> Optional[str]:
+    """Get the current correlation ID."""
+    try:
+        # Try context var first (works in async)
+        return correlation_id.get()
+    except LookupError:
+        # Fall back to thread local (sync contexts)
+        return getattr(_thread_local, 'correlation_id', None)
+
+
+def set_request_id(request_id_value: str) -> None:
+    """Set the request ID for the current context."""
+    request_id.set(request_id_value)
+    _thread_local.request_id = request_id_value
+
+
+def get_request_id() -> Optional[str]:
+    """Get the current request ID."""
+    try:
+        return request_id.get()
+    except LookupError:
+        return getattr(_thread_local, 'request_id', None)
+
+
+def set_user_id(user_id_value: str) -> None:
+    """Set the user ID for the current context."""
+    user_id.set(user_id_value)
+    _thread_local.user_id = user_id_value
+
+
+def get_user_id() -> Optional[str]:
+    """Get the current user ID."""
+    try:
+        return user_id.get()
+    except LookupError:
+        return getattr(_thread_local, 'user_id', None)
+
+
+@contextmanager
+def correlation_context(correlation_id_value: Optional[str] = None, 
+                       request_id_value: Optional[str] = None,
+                       user_id_value: Optional[str] = None):
+    """Context manager for setting correlation context."""
+    # Generate correlation ID if not provided
+    if correlation_id_value is None:
+        correlation_id_value = generate_correlation_id()
+    
+    # Save previous values
+    old_correlation = get_correlation_id()
+    old_request = get_request_id()
+    old_user = get_user_id()
+    
+    try:
+        # Set new values
+        set_correlation_id(correlation_id_value)
+        if request_id_value:
+            set_request_id(request_id_value)
+        if user_id_value:
+            set_user_id(user_id_value)
+        
+        yield {
+            'correlation_id': correlation_id_value,
+            'request_id': request_id_value,
+            'user_id': user_id_value,
+        }
+    finally:
+        # Restore previous values
+        if old_correlation:
+            set_correlation_id(old_correlation)
+        if old_request:
+            set_request_id(old_request)
+        if old_user:
+            set_user_id(old_user)
+
+
+def with_correlation(correlation_id_value: Optional[str] = None):
+    """Decorator for adding correlation context to functions."""
+    def decorator(func):
+        if asyncio.iscoroutinefunction(func):
+            async def async_wrapper(*args, **kwargs):
+                with correlation_context(correlation_id_value):
+                    return await func(*args, **kwargs)
+            return async_wrapper
+        else:
+            def sync_wrapper(*args, **kwargs):
+                with correlation_context(correlation_id_value):
+                    return func(*args, **kwargs)
+            return sync_wrapper
+    return decorator
+
+
+# Initialize enhanced logging on module import
+_logger_setup = EnhancedLoggerSetup()
+
+
+def setup_logging() -> EnhancedLoggerSetup:
     """Ensure logging is configured and return the LoggerSetup instance.
 
     This is a small compatibility helper for modules that import
@@ -280,7 +497,7 @@ def setup_logging() -> LoggerSetup:
     """
     global _logger_setup
     if _logger_setup is None:
-        _logger_setup = LoggerSetup()
+        _logger_setup = EnhancedLoggerSetup()
     return _logger_setup
 
 
@@ -330,3 +547,9 @@ def with_correlation(func):
         return async_wrapper
     else:
         return sync_wrapper
+
+
+# Legacy class for backward compatibility
+class LoggerSetup(EnhancedLoggerSetup):
+    """Legacy logger setup - redirects to enhanced version."""
+    pass
