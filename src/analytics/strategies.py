@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..config.logging_config import get_logger
 from ..github_monitor.models import Issue, IssuePriority, IssueState, IssueType
-from ..utils import retry, track_api_calls, RetryPolicy
 
 
 class AnalysisType(str, Enum):
@@ -97,8 +96,6 @@ class ProductivityAnalysisStrategy(AnalysisStrategy):
     def get_analysis_type(self) -> AnalysisType:
         return AnalysisType.PRODUCTIVITY
 
-    @retry(policy=RetryPolicy.fast_operations())
-    @track_api_calls('analytics_productivity')
     async def analyze(
         self, issues: List[Issue], days_back: int = 30, **kwargs
     ) -> AnalysisResult:
@@ -227,8 +224,6 @@ class VelocityAnalysisStrategy(AnalysisStrategy):
     def get_analysis_type(self) -> AnalysisType:
         return AnalysisType.VELOCITY
 
-    @retry(policy=RetryPolicy.fast_operations())
-    @track_api_calls('analytics_velocity')
     async def analyze(
         self, issues: List[Issue], weeks_back: int = 8, **kwargs
     ) -> AnalysisResult:
@@ -363,8 +358,6 @@ class BurndownAnalysisStrategy(AnalysisStrategy):
     def get_analysis_type(self) -> AnalysisType:
         return AnalysisType.BURNDOWN
 
-    @retry(policy=RetryPolicy.fast_operations())
-    @track_api_calls('analytics_burndown')
     async def analyze(
         self, issues: List[Issue], milestone: Optional[str] = None, **kwargs
     ) -> AnalysisResult:
@@ -484,8 +477,6 @@ class QualityAnalysisStrategy(AnalysisStrategy):
     def get_analysis_type(self) -> AnalysisType:
         return AnalysisType.QUALITY
 
-    @retry(policy=RetryPolicy.fast_operations())
-    @track_api_calls('analytics_quality')
     async def analyze(self, issues: List[Issue], **kwargs) -> AnalysisResult:
         """Analyze quality metrics from issue patterns."""
         self.logger.info(f"Analyzing quality metrics for {len(issues)} issues")
