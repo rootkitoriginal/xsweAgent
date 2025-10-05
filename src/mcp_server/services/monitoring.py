@@ -92,7 +92,7 @@ async def check_metrics_collector() -> HealthCheckResult:
         from ...utils import get_metrics_collector
 
         collector = get_metrics_collector()
-        metrics = collector.get_metrics()
+        metrics = collector.get_all_metrics()
 
         return HealthCheckResult(
             component="metrics_collector",
@@ -156,7 +156,7 @@ async def run_periodic_health_checks(interval: int = 60):
             await asyncio.sleep(interval)
 
             results = await registry.check_all()
-            overall_status = await registry.get_overall_status()
+            overall_status = await registry.get_system_health()
 
             # Log summary
             healthy = sum(

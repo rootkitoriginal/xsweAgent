@@ -194,7 +194,7 @@ async def read_resource(
 
             registry = get_health_check_registry()
             results = await registry.check_all()
-            overall = await registry.get_overall_status()
+            overall = await registry.get_system_health()
 
             return {
                 "uri": uri,

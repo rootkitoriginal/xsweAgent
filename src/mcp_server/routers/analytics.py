@@ -27,7 +27,7 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.post("/run", response_model=Dict[str, AnalysisResult])
-@retry(RetryPolicies.STANDARD)
+@retry(policy=RetryPolicies.STANDARD)
 @track_api_calls("analytics_run")
 async def run_analysis(
     analytics_engine: AnalyticsEngine = Depends(get_analytics_engine),
@@ -59,7 +59,7 @@ async def run_analysis(
 
 
 @router.get("/summary", response_model=dict)
-@retry(RetryPolicies.STANDARD)
+@retry(policy=RetryPolicies.STANDARD)
 @track_api_calls("analytics_summary")
 async def get_analysis_summary(
     analytics_engine: AnalyticsEngine = Depends(get_analytics_engine),

@@ -22,7 +22,7 @@ class ChartFactory:
     """
 
     @staticmethod
-    @retry(RetryPolicies.FAST)
+    @retry(policy=RetryPolicies.FAST)
     def create(
         chart_type: ChartType,
         data: Any,

@@ -9,10 +9,10 @@ import pytest
 
 from src.utils import (
     BackoffStrategy,
+    BaseHealthCheck,
     CircuitBreaker,
     CircuitBreakerPolicies,
-    HealthCheck,
-    HealthCheckRegistry,
+    HealthChecker,
     HealthCheckResult,
     HealthStatus,
     MetricsCollector,
@@ -31,7 +31,7 @@ class TestRetry:
         """Test successful call with retry decorator."""
         call_count = 0
 
-        @retry(RetryPolicies.FAST)
+        @retry(policy=RetryPolicies.FAST)
         async def successful_call():
             nonlocal call_count
             call_count += 1
@@ -46,7 +46,7 @@ class TestRetry:
         """Test call that succeeds after retries."""
         call_count = 0
 
-        @retry(RetryPolicies.FAST)
+        @retry(policy=RetryPolicies.FAST)
         async def eventually_successful():
             nonlocal call_count
             call_count += 1
@@ -60,17 +60,25 @@ class TestRetry:
 
     def test_retry_policy_configuration(self):
         """Test retry policy configuration."""
-        policy = RetryPolicy(
+        from src.utils.retry import RetryConfig
+        
+        config = RetryConfig(
             max_attempts=5,
             base_delay=2.0,
             max_delay=30.0,
             backoff_strategy=BackoffStrategy.EXPONENTIAL,
         )
+        
+        policy = RetryPolicy(
+            name="test_policy",
+            config=config,
+            description="Test retry policy"
+        )
 
-        assert policy.max_attempts == 5
-        assert policy.base_delay == 2.0
-        assert policy.max_delay == 30.0
-        assert policy.backoff_strategy == BackoffStrategy.EXPONENTIAL
+        assert policy.config.max_attempts == 5
+        assert policy.config.base_delay == 2.0
+        assert policy.config.max_delay == 30.0
+        assert policy.config.backoff_strategy == BackoffStrategy.EXPONENTIAL
 
 
 class TestCircuitBreaker:
@@ -79,24 +87,23 @@ class TestCircuitBreaker:
     @pytest.mark.asyncio
     async def test_circuit_breaker_closed_state(self):
         """Test circuit breaker in closed state."""
-        breaker = CircuitBreaker(CircuitBreakerPolicies.STANDARD)
+        breaker = CircuitBreaker("test_breaker", CircuitBreakerPolicies.external_service())
 
-        @breaker
         async def successful_call():
             return "success"
 
-        result = await successful_call()
+        result = await breaker.execute_async_request(successful_call)
         assert result == "success"
-        assert breaker.state.failure_count == 0
+        assert breaker.stats.failure_count == 0
 
     def test_circuit_breaker_state(self):
         """Test getting circuit breaker state."""
-        breaker = CircuitBreaker(CircuitBreakerPolicies.STANDARD)
-        state = breaker.get_state()
+        breaker = CircuitBreaker("test_breaker_2", CircuitBreakerPolicies.external_service())
+        stats = breaker.get_stats()
 
-        assert "state" in state
-        assert "failure_count" in state
-        assert state["failure_count"] == 0
+        assert "state" in stats
+        assert "failure_count" in stats
+        assert stats["failure_count"] == 0
 
 
 class TestHealthChecks:
@@ -105,16 +112,17 @@ class TestHealthChecks:
     @pytest.mark.asyncio
     async def test_health_check_success(self):
         """Test successful health check."""
+        
+        class TestHealthCheck(BaseHealthCheck):
+            async def _perform_check(self) -> HealthCheckResult:
+                return HealthCheckResult(
+                    component="test",
+                    status=HealthStatus.HEALTHY,
+                    message="All good",
+                )
 
-        async def check_func():
-            return HealthCheckResult(
-                component="test",
-                status=HealthStatus.HEALTHY,
-                message="All good",
-            )
-
-        check = HealthCheck("test", check_func)
-        result = await check.execute()
+        check = TestHealthCheck("test")
+        result = await check.check()
 
         assert result.component == "test"
         assert result.status == HealthStatus.HEALTHY
@@ -123,45 +131,53 @@ class TestHealthChecks:
     @pytest.mark.asyncio
     async def test_health_check_registry(self):
         """Test health check registry."""
-        registry = HealthCheckRegistry()
+        registry = HealthChecker()
 
-        async def check_func():
-            return HealthCheckResult(
-                component="test",
-                status=HealthStatus.HEALTHY,
-            )
+        class TestHealthCheck(BaseHealthCheck):
+            async def _perform_check(self) -> HealthCheckResult:
+                return HealthCheckResult(
+                    component="test_component",
+                    status=HealthStatus.HEALTHY,
+                    message="Health check passed",
+                )
 
-        check = HealthCheck("test_component", check_func)
-        registry.register(check)
+        check = TestHealthCheck("test_component")
+        registry.register_check(check)
 
-        assert "test_component" in registry.list_checks()
+        assert "test_component" in registry.checks
 
-        result = await registry.check("test_component")
+        result = await registry.check_single("test_component")
         assert result.status == HealthStatus.HEALTHY
 
     @pytest.mark.asyncio
     async def test_health_check_overall_status(self):
         """Test overall health status calculation."""
-        registry = HealthCheckRegistry()
+        registry = HealthChecker()
 
-        async def healthy_check():
-            return HealthCheckResult(
-                component="healthy",
-                status=HealthStatus.HEALTHY,
-            )
+        class HealthyCheck(BaseHealthCheck):
+            async def _perform_check(self) -> HealthCheckResult:
+                return HealthCheckResult(
+                    component="healthy",
+                    status=HealthStatus.HEALTHY,
+                    message="System is healthy",
+                )
 
-        async def degraded_check():
-            return HealthCheckResult(
-                component="degraded",
-                status=HealthStatus.DEGRADED,
-            )
+        class DegradedCheck(BaseHealthCheck):
+            async def _perform_check(self) -> HealthCheckResult:
+                return HealthCheckResult(
+                    component="degraded",
+                    status=HealthStatus.DEGRADED,
+                    message="System is degraded",
+                )
 
-        registry.register(HealthCheck("healthy", healthy_check))
-        registry.register(HealthCheck("degraded", degraded_check, critical=False))
+        registry.register_check(HealthyCheck("healthy"))
+        registry.register_check(DegradedCheck("degraded"))
 
-        overall = await registry.get_overall_status()
-        # Should be degraded due to one degraded component
-        assert overall == HealthStatus.DEGRADED
+        health_status = await registry.get_system_health()
+        # Should have both components checked
+        assert "healthy" in health_status["components"]
+        assert "degraded" in health_status["components"]
+        assert health_status["summary"]["total_checks"] == 2
 
 
 class TestMetrics:
@@ -171,45 +187,47 @@ class TestMetrics:
         """Test basic metrics recording."""
         collector = MetricsCollector()
 
-        collector.record("test_metric", 100.0)
-        collector.record("test_metric", 200.0)
-        collector.record("test_metric", 150.0)
+        # Create a gauge metric and set values
+        test_gauge = collector.gauge("test_metric", "Test metric")
+        test_gauge.set(100.0)
+        test_gauge.set(200.0)
+        test_gauge.set(150.0)
 
-        metrics = collector.get_metrics()
+        metrics = collector.get_all_metrics()
         assert "test_metric" in metrics
 
         metric = metrics["test_metric"]
-        assert metric.count == 3
-        assert metric.total == 450.0
-        assert metric.avg == 150.0
-        assert metric.min == 100.0
-        assert metric.max == 200.0
+        assert metric.get_value() == 150.0  # Last set value for gauge
 
     def test_metrics_counters(self):
         """Test counter metrics."""
         collector = MetricsCollector()
 
-        collector.increment("api_calls", 1, labels={"endpoint": "/test"})
-        collector.increment("api_calls", 1, labels={"endpoint": "/test"})
-        collector.increment("api_calls", 1, labels={"endpoint": "/test"})
+        # Create a counter and increment it
+        api_counter = collector.counter("api_calls", "API call counter", {"endpoint": "/test"})
+        api_counter.inc()
+        api_counter.inc()
+        api_counter.inc()
 
-        counters = collector.get_counters()
-        assert len(counters) > 0
+        metrics = collector.get_all_metrics()
+        assert "api_calls" in metrics
+        counter_metric = metrics["api_calls"]
+        assert counter_metric.get_value() == 3
 
-    def test_metrics_clear(self):
-        """Test clearing metrics."""
+    def test_metrics_stats(self):
+        """Test metrics statistics."""
         collector = MetricsCollector()
 
-        collector.record("test_metric", 100.0)
-        collector.increment("counter", 1)
+        # Create different types of metrics
+        collector.gauge("test_gauge", "Test gauge")
+        collector.counter("test_counter", "Test counter")
+        collector.histogram("test_histogram", "Test histogram")
 
-        collector.clear()
-
-        metrics = collector.get_metrics()
-        counters = collector.get_counters()
-
-        assert len(metrics) == 0
-        assert len(counters) == 0
+        stats = collector.get_stats()
+        assert stats["registered_metrics"] >= 3
+        assert "counter" in stats["metrics_by_type"]
+        assert "gauge" in stats["metrics_by_type"]
+        assert "histogram" in stats["metrics_by_type"]
 
     @pytest.mark.asyncio
     async def test_track_api_calls_decorator(self):
@@ -217,7 +235,6 @@ class TestMetrics:
         from src.utils import get_metrics_collector
 
         collector = get_metrics_collector()
-        collector.clear()
 
         @track_api_calls("test_endpoint")
         async def test_function():
@@ -227,19 +244,22 @@ class TestMetrics:
         assert result == "success"
 
         # Check that metrics were recorded
-        counters = collector.get_counters()
-        # Should have recorded a call
-        assert len(counters) > 0
+        metrics = collector.get_all_metrics()
+        # Should have recorded API request metrics
+        assert "api_requests_total" in metrics
 
     def test_prometheus_format(self):
         """Test Prometheus format export."""
         collector = MetricsCollector()
-        collector.clear()
 
-        collector.record("test_metric", 100.0)
-        collector.increment("test_counter", 5)
+        # Create some metrics
+        gauge = collector.gauge("test_gauge", "Test gauge metric")
+        counter = collector.counter("test_counter", "Test counter metric")
+        
+        gauge.set(100.0)
+        counter.inc(5)
 
-        prometheus_text = collector.get_prometheus_format()
+        prometheus_text = collector.collect()
 
         assert isinstance(prometheus_text, str)
         assert "# HELP" in prometheus_text

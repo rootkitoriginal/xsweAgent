@@ -23,7 +23,7 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.get("/issues", response_model=List[Issue])
-@retry(RetryPolicies.GITHUB_API)
+@retry(policy=RetryPolicies.GITHUB_API)
 @track_api_calls("github_issues")
 async def get_all_issues(service: GitHubIssuesService = Depends(get_github_service)):
     """
@@ -45,7 +45,7 @@ async def get_all_issues(service: GitHubIssuesService = Depends(get_github_servi
 
 
 @router.get("/issues/summary", response_model=dict)
-@retry(RetryPolicies.GITHUB_API)
+@retry(policy=RetryPolicies.GITHUB_API)
 @track_api_calls("github_summary")
 async def get_issues_summary(
     service: GitHubIssuesService = Depends(get_github_service),

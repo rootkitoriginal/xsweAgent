@@ -25,17 +25,19 @@ class TestChartsIntegration:
             "closed": [8, 12, 15, 14]
         }
         
-        # Generate chart
-        chart = ChartFactory.create_chart(
+        # Generate chart configuration
+        config = ChartFactory.create(
             chart_type=ChartType.BAR,
             data=data,
             title="Issue Activity"
         )
-        
-        assert chart is not None
-        
+
+        assert config is not None
+
         # Generate the actual chart
-        result = chart.generate()
+        from src.charts.generator import ChartGenerator
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_time_series_chart_generation(self):
@@ -49,13 +51,14 @@ class TestChartsIntegration:
             "values": list(range(30, 0, -1))
         }
         
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.LINE,
             data=data,
             title="Issue Trend"
         )
         
-        result = chart.generate()
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_burndown_chart_generation(self):
@@ -66,13 +69,14 @@ class TestChartsIntegration:
             "actual": [50, 45, 35, 25, 15]
         }
         
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.LINE,
             data=data,
             title="Sprint Burndown"
         )
         
-        result = chart.generate()
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_pie_chart_generation(self):
@@ -82,13 +86,14 @@ class TestChartsIntegration:
             "values": [15, 8, 42, 5]
         }
         
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.PIE,
             data=data,
             title="Issue Status Distribution"
         )
         
-        result = chart.generate()
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_multiple_chart_generation(self):
@@ -113,12 +118,13 @@ class TestChartsIntegration:
         
         charts = []
         for config in chart_configs:
-            chart = ChartFactory.create_chart(
+            config = ChartFactory.create(
                 chart_type=config["type"],
                 data=config["data"],
                 title=config["title"]
             )
-            charts.append(chart.generate())
+            generator = ChartGenerator(config)
+            charts.append(generator.generate())
         
         assert len(charts) == 3
         assert all(c is not None for c in charts)
@@ -126,8 +132,8 @@ class TestChartsIntegration:
     def test_chart_with_custom_styling(self):
         """Test chart generation with custom styling options."""
         data = {
-            "labels": ["Jan", "Feb", "Mar"],
-            "values": [100, 150, 120]
+            "x": ["Jan", "Feb", "Mar"],
+            "y": [100, 150, 120]
         }
         
         # Add custom styling
@@ -137,32 +143,36 @@ class TestChartsIntegration:
             "height": 600
         }
         
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.BAR,
             data=data,
-            title="Monthly Stats",
-            options=options
+            title="Monthly Stats"
         )
         
-        result = chart.generate()
+        assert config is not None, "Chart configuration should be created successfully"
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_chart_export_formats(self):
         """Test exporting charts in different formats."""
         data = {"labels": ["A", "B"], "values": [10, 20]}
         
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.BAR,
             data=data,
             title="Test Chart"
         )
         
         # Generate chart (format depends on implementation)
-        result = chart.generate()
+        generator = ChartGenerator(config)
+        result = generator.generate()
         
-        # Verify result is in expected format (bytes, image, etc.)
+        # Verify result is in expected format (GeneratedChart object)
         assert result is not None
-        assert isinstance(result, (bytes, str, BytesIO)) or hasattr(result, 'savefig')
+        assert hasattr(result, 'image_data')
+        assert hasattr(result, 'save')
+        assert isinstance(result.image_data, bytes)
     
     def test_chart_from_issues_workflow(self):
         """Test complete workflow from issues to chart."""
@@ -180,26 +190,28 @@ class TestChartsIntegration:
         }
         
         # Generate chart
-        chart = ChartFactory.create_chart(
+        config = ChartFactory.create(
             chart_type=ChartType.PIE,
             data=data,
             title="Issue Status"
         )
         
-        result = chart.generate()
+        generator = ChartGenerator(config)
+        result = generator.generate()
         assert result is not None
     
     def test_chart_error_handling_invalid_data(self):
         """Test chart generation handles invalid data gracefully."""
         # Try with empty data
         try:
-            chart = ChartFactory.create_chart(
+            config = ChartFactory.create(
                 chart_type=ChartType.BAR,
                 data={},
                 title="Empty Chart"
             )
             # Should either raise or handle gracefully
-            result = chart.generate()
+            generator = ChartGenerator(config)
+            result = generator.generate()
             # If it doesn't raise, result should be None or valid
             assert result is None or result is not None
         except (ValueError, KeyError, TypeError):
@@ -221,10 +233,15 @@ class TestChartsIntegration:
     
     def test_chart_generator_initialization(self):
         """Test ChartGenerator can be initialized and configured."""
-        generator = ChartGenerator()
+        config = ChartFactory.create(
+            chart_type=ChartType.BAR,
+            data={"labels": ["A"], "values": [10]},
+            title="Test"
+        )
+        generator = ChartGenerator(config)
         
         assert generator is not None
-        assert hasattr(generator, 'generate_chart') or hasattr(generator, 'create_chart')
+        assert hasattr(generator, 'generate') or hasattr(generator, 'create_chart')
     
     def test_concurrent_chart_generation(self):
         """Test generating multiple charts concurrently."""
@@ -235,12 +252,13 @@ class TestChartsIntegration:
                 "labels": [f"Item {i}" for i in range(5)],
                 "values": [i * index for i in range(5)]
             }
-            chart = ChartFactory.create_chart(
+            config = ChartFactory.create(
                 chart_type=ChartType.BAR,
                 data=data,
                 title=f"Chart {index}"
             )
-            return chart.generate()
+            generator = ChartGenerator(config)
+            return generator.generate()
         
         # Generate 5 charts concurrently
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:

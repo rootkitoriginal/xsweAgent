@@ -41,7 +41,7 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.get("/generate/{analysis_type}", response_class=Response)
-@retry(RetryPolicies.STANDARD)
+@retry(policy=RetryPolicies.STANDARD)
 @track_api_calls("chart_generation")
 async def generate_chart_for_analysis(
     analysis_type: str,

@@ -49,7 +49,7 @@ async def get_metrics_summary():
     """
     try:
         collector = get_metrics_collector()
-        metrics = collector.get_metrics()
+        metrics = collector.get_all_metrics()
         counters = collector.get_counters()
 
         metrics_data = {}
@@ -85,7 +85,7 @@ async def get_performance_metrics():
     """
     try:
         collector = get_metrics_collector()
-        metrics = collector.get_metrics()
+        metrics = collector.get_all_metrics()
 
         # Filter performance-related metrics
         performance_metrics = {}
@@ -151,7 +151,7 @@ async def get_metrics_health():
     """
     try:
         collector = get_metrics_collector()
-        metrics = collector.get_metrics()
+        metrics = collector.get_all_metrics()
         counters = collector.get_counters()
 
         return {

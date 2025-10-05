@@ -173,7 +173,7 @@ class CodeAnalyzer:
 
     # ========== Issue Intelligence ==========
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @track_api_calls("gemini_issue_analysis")
     async def issue_analysis(self, issue: Issue) -> IssueInsightResult:
         """
@@ -262,7 +262,7 @@ class CodeAnalyzer:
 
     # ========== Trend Prediction ==========
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @track_api_calls("gemini_trend_prediction")
     async def trend_prediction(
         self, historical_data: List[Dict[str, Any]]
@@ -356,7 +356,7 @@ class CodeAnalyzer:
 
     # ========== Sentiment Analysis ==========
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @track_api_calls("gemini_sentiment_analysis")
     async def sentiment_analysis(self, text: str) -> SentimentResult:
         """
@@ -445,7 +445,7 @@ class CodeAnalyzer:
 
     # ========== Priority Analysis ==========
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @track_api_calls("gemini_priority_analysis")
     async def priority_analysis(self, issue: Issue) -> PriorityRecommendation:
         """
@@ -540,7 +540,7 @@ class CodeAnalyzer:
 
     # ========== Collaboration Analysis ==========
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @track_api_calls("gemini_collaboration_analysis")
     async def collaboration_analysis(
         self, team_data: Dict[str, Any]

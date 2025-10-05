@@ -22,7 +22,7 @@ from ..utils import (
     ChartGenerationError,
     RetryPolicies,
     retry,
-    track_execution_time,
+    track_api_calls,
 )
 from .models import (
     ChartBackend,
@@ -61,8 +61,8 @@ class ChartGenerator:
             self._fig = None
             self._plotly_fig = None
 
-    @retry(RetryPolicies.FAST)
-    @track_execution_time('chart_generation')
+    @retry(policy=RetryPolicies.FAST)
+    @track_api_calls('chart_generation')
     def generate(self, export_options: Optional[ExportOptions] = None) -> Union[GeneratedChart, ChartResult]:
         """
         Generate the chart based on the configuration.

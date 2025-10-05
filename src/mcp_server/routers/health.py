@@ -26,26 +26,18 @@ async def get_health_status():
     registry = get_health_check_registry()
 
     try:
-        overall_status = await registry.get_overall_status()
-        results = await registry.check_all()
-
-        # Count statuses
-        status_counts = {
-            "healthy": 0,
-            "degraded": 0,
-            "unhealthy": 0,
-        }
-
-        for result in results.values():
-            status_counts[result.status.value] += 1
-
+        system_health = await registry.get_system_health()
+        
+        # get_system_health already returns everything we need
         return {
-            "status": overall_status.value,
-            "components": len(results),
-            "summary": status_counts,
-            "timestamp": results[list(results.keys())[0]].timestamp
-            if results
-            else None,
+            "status": system_health["status"],
+            "components": system_health["summary"]["total_checks"],
+            "summary": {
+                "healthy": system_health["summary"]["healthy"],
+                "degraded": system_health["summary"]["degraded"],
+                "unhealthy": system_health["summary"]["unhealthy"]
+            },
+            "timestamp": system_health["timestamp"],
         }
     except Exception as e:
         logger.error(f"Failed to get health status: {e}", exc_info=True)
@@ -73,7 +65,7 @@ async def get_component_health():
             components[name] = {
                 "status": result.status.value,
                 "message": result.message,
-                "duration_ms": result.duration_ms,
+                "duration_ms": result.duration * 1000,
                 "timestamp": result.timestamp,
                 "details": result.details,
             }
@@ -110,7 +102,7 @@ async def get_specific_component_health(component: str):
             "component": component,
             "status": result.status.value,
             "message": result.message,
-            "duration_ms": result.duration_ms,
+            "duration_ms": result.duration * 1000,
             "timestamp": result.timestamp,
             "details": result.details,
         }
@@ -145,7 +137,7 @@ async def get_health_metrics():
                 "status_distribution": {},
             }
 
-        total_duration = sum(r.duration_ms for r in results.values())
+        total_duration = sum(r.duration * 1000 for r in results.values())
         avg_duration = total_duration / len(results)
 
         status_distribution = {
@@ -164,10 +156,10 @@ async def get_health_metrics():
             "total_checks": len(results),
             "avg_duration_ms": round(avg_duration, 2),
             "min_duration_ms": round(
-                min(r.duration_ms for r in results.values()), 2
+                min(r.duration * 1000 for r in results.values()), 2
             ),
             "max_duration_ms": round(
-                max(r.duration_ms for r in results.values()), 2
+                max(r.duration * 1000 for r in results.values()), 2
             ),
             "status_distribution": status_distribution,
         }
@@ -190,7 +182,7 @@ async def trigger_health_check():
 
     try:
         results = await registry.check_all()
-        overall_status = await registry.get_overall_status()
+        overall_status = await registry.get_system_health()
 
         return {
             "status": overall_status.value,
@@ -199,7 +191,7 @@ async def trigger_health_check():
                 name: {
                     "status": result.status.value,
                     "message": result.message,
-                    "duration_ms": result.duration_ms,
+                    "duration_ms": result.duration * 1000,
                 }
                 for name, result in results.items()
             },

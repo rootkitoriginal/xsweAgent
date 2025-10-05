@@ -218,7 +218,7 @@ async def call_tool(
 
             registry = get_health_check_registry()
             results = await registry.check_all()
-            overall = await registry.get_overall_status()
+            overall = await registry.get_system_health()
 
             return {
                 "tool": request.tool,

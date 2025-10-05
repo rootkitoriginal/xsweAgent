@@ -82,13 +82,15 @@ class TestConcurrentLoad:
             return await engine.analyze(issues, f"repo-{i}")
         
         def chart_task(i):
-            data = {"labels": ["A", "B"], "values": [10, 20]}
-            chart = ChartFactory.create_chart(
+            from src.charts.generator import ChartGenerator
+            data = {"x": ["A", "B"], "y": [10, 20]}
+            config = ChartFactory.create(
                 chart_type=ChartType.BAR,
                 data=data,
                 title=f"Chart {i}"
             )
-            return chart.generate()
+            generator = ChartGenerator(config)
+            return generator.generate()
         
         start_time = time.time()
         

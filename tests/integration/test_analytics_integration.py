@@ -178,9 +178,9 @@ class TestAnalyticsIntegration:
         
         # Create custom configuration
         config = AnalyticsConfiguration(
-            minimum_issues=5,
+            minimum_issues_for_analysis=5,
             velocity_calculation_period=14,
-            quality_weight=0.8
+            time_window_days=60
         )
         
         engine = await create_analytics_engine()

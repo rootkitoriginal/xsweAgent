@@ -81,7 +81,7 @@ class GeminiClient:
             self._model = genai.GenerativeModel(self.model_name)
         return self._model
 
-    @retry(RetryPolicies.GEMINI_API)
+    @retry(policy=RetryPolicies.GEMINI_API)
     @circuit_breaker(name="gemini_api", config=CircuitBreakerPolicies.gemini_api())
     @track_api_calls("gemini_generate_content")
     async def generate_content(

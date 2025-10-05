@@ -67,7 +67,7 @@ def get_github_service(request: Request) -> GitHubIssuesService:
 
 
 @router.post("/analyze/code")
-@retry(RetryPolicies.GEMINI_API)
+@retry(policy=RetryPolicies.GEMINI_API)
 @track_api_calls("ai_code_analysis")
 async def analyze_code(
     request: CodeAnalysisRequest,
@@ -117,7 +117,7 @@ async def analyze_code(
 
 
 @router.post("/analyze/issues")
-@retry(RetryPolicies.GEMINI_API)
+@retry(policy=RetryPolicies.GEMINI_API)
 @track_api_calls("ai_issue_analysis")
 async def analyze_issues(
     request: IssueAnalysisRequest,
@@ -199,7 +199,7 @@ Issues:
 
 
 @router.post("/sentiment")
-@retry(RetryPolicies.GEMINI_API)
+@retry(policy=RetryPolicies.GEMINI_API)
 @track_api_calls("ai_sentiment_analysis")
 async def analyze_sentiment(
     request: SentimentAnalysisRequest,
@@ -250,7 +250,7 @@ Text: {text}
 
 
 @router.post("/predict")
-@retry(RetryPolicies.GEMINI_API)
+@retry(policy=RetryPolicies.GEMINI_API)
 @track_api_calls("ai_prediction")
 async def predict_trends(
     request: PredictionRequest,

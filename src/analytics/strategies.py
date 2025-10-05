@@ -477,7 +477,7 @@ class QualityAnalysisStrategy(AnalysisStrategy):
     def get_analysis_type(self) -> AnalysisType:
         return AnalysisType.QUALITY
 
-    async def analyze(self, issues: List[Issue], **kwargs) -> AnalysisResult:
+    async def analyze(self, issues: List[Issue], context_or_unused=None, **kwargs) -> AnalysisResult:
         """Analyze quality metrics from issue patterns."""
         self.logger.info(f"Analyzing quality metrics for {len(issues)} issues")
 
