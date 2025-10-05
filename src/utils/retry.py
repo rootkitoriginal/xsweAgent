@@ -318,8 +318,10 @@ def _sync_retry_wrapper(func: Callable, config: RetryConfig) -> Callable:
                     )
                     raise RetryException(
                         f"Failed after {context.attempt} attempts: {str(e)}",
-                        attempts=context.attempt,
-                        last_exception=e,
+                        details={
+                            "attempts": context.attempt,
+                            "last_exception": str(e),
+                        }
                     )
                 
                 # Calculate delay and sleep
@@ -372,8 +374,10 @@ def _async_retry_wrapper(func: Callable, config: RetryConfig) -> Callable:
                     )
                     raise RetryException(
                         f"Failed after {context.attempt} attempts: {str(e)}",
-                        attempts=context.attempt,
-                        last_exception=e,
+                        details={
+                            "attempts": context.attempt,
+                            "last_exception": str(e),
+                        }
                     )
                 
                 # Calculate delay and sleep

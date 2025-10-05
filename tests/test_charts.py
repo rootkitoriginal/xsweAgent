@@ -30,7 +30,7 @@ def productivity_analysis_result():
 
 def test_chart_factory_productivity_bar(productivity_analysis_result):
     """Test creating a bar chart from a productivity result."""
-    chart_data = ChartFactory.create(productivity_analysis_result, ChartType.BAR)
+    chart_data = ChartFactory.create_chart(productivity_analysis_result, ChartType.BAR)
 
     assert chart_data is not None
     config = chart_data.config
@@ -42,7 +42,7 @@ def test_chart_factory_productivity_bar(productivity_analysis_result):
 
 def test_chart_factory_productivity_pie(productivity_analysis_result):
     """Test creating a pie chart from a productivity result."""
-    chart_data = ChartFactory.create(productivity_analysis_result, ChartType.PIE)
+    chart_data = ChartFactory.create_chart(productivity_analysis_result, ChartType.PIE)
 
     assert chart_data is not None
     config = chart_data.config

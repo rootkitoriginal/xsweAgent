@@ -109,7 +109,7 @@ def mock_github_repository():
 @pytest.fixture
 def mock_github_api():
     """Mock entire GitHub API responses."""
-    with patch('src.github_monitor.repository.Github') as mock_github:
+    with patch('github.Github') as mock_github:
         mock_client = MagicMock()
         mock_repo = MagicMock()
         
@@ -154,10 +154,10 @@ def calculate_metrics(issues):
     """Calculate basic metrics from issues."""
     if not issues:
         return {}
-    
+
     total = len(issues)
     open_issues = sum(1 for i in issues if i.state == "open")
-    
+
     return {
         "total": total,
         "open": open_issues,
@@ -165,10 +165,8 @@ def calculate_metrics(issues):
     }
         '''.strip(),
         language="python",
-        file_path="src/analytics/metrics.py"
+        filename="src/analytics/metrics.py"
     )
-
-
 @pytest.fixture
 def mock_analysis_result():
     """Mock Gemini analysis result."""
