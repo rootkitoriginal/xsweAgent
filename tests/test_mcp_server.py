@@ -13,8 +13,8 @@ from src.config import settings
 settings.get_settings.cache_clear()
 settings.SETTINGS_CACHE = None
 
-from src.github_monitor.models import Issue, IssueState
-from src.mcp_server.main import app
+from src.github_monitor.models import Issue, IssueState  # noqa: E402
+from src.mcp_server.main import app  # noqa: E402
 
 
 @pytest.fixture

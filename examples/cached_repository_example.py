@@ -28,8 +28,8 @@ def example_basic_caching():
     )
 
     print("\nConfiguration:")
-    print(f"  - Default TTL: 300s (5 minutes)")
-    print(f"  - Repository Info TTL: 1800s (30 minutes)")
+    print("  - Default TTL: 300s (5 minutes)")
+    print("  - Repository Info TTL: 1800s (30 minutes)")
 
     print("\nNote: This is a demonstration. Replace token with real GitHub token")
     print("      to see actual API calls and caching in action.")
