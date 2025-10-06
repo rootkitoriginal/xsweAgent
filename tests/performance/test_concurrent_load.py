@@ -193,7 +193,7 @@ class TestConcurrentLoad:
             issues = create_sample_issues(total=30, open_ratio=0.5)
             engine = await create_analytics_engine()
             result = await engine.analyze(issues, f"cleanup-{i}")
-            await engine.clear_cache()
+            engine.clear_cache()  # Not an async method, no await needed
             return result
         
         # Run 20 analyses

@@ -205,7 +205,7 @@ class TestAnalyticsPerformance:
         first_run_duration = time.time() - start_time
         
         # Clear and run again to measure consistency
-        await engine.clear_cache()
+        engine.clear_cache()  # Not an async method, no await needed
         
         start_time = time.time()
         results2 = await engine.analyze(issues, "test/repo")
