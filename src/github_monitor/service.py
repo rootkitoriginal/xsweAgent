@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..config import get_config
-from ..config.logging_config import get_logger
+from src.config import get_config
+from src.config.logging_config import get_logger
 from .models import Issue, IssuePriority, IssueState, IssueType
 from .repository import (
     GitHubRepositoryInterface,

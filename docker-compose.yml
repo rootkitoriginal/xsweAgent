@@ -84,7 +84,7 @@ services:
     ports:
       - "9091:9090"
     volumes:
-      - ./prometheus.yml:/tmp/prometheus.yml:ro
+      - ./prometheus.yml/prometheus.yml:/tmp/prometheus.yml:ro
       - ./prometheus_entrypoint.sh:/prometheus_entrypoint.sh
       - prometheus_data:/prometheus
     entrypoint: /prometheus_entrypoint.sh

@@ -8,6 +8,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+# Reexport repository search criteria for compatibility with legacy imports.
+from .repository import SearchCriteria  # noqa: F401
+
 
 class IssueState(str, Enum):
     """GitHub issue state enumeration."""
